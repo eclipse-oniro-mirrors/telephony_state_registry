@@ -53,10 +53,12 @@ const std::map<std::string_view, TelephonyUpdateEventType> eventMap {
     { "cCallStateChange", TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE },
     { "simActiveStateChange", TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE },
     { "voipStateChange", TelephonyUpdateEventType::EVENT_VOIP_CALL_STATE_UPDATE },
+    { "callTransferChange", TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE },
 };
 
 TelephonyUpdateEventType GetEventType(std::string_view event)
 {
+    TELEPHONY_LOGI("hjh, GetEventType=%{public}s", std::string(event).c_str());
     auto serched = eventMap.find(event);
     return (serched != eventMap.end() ? serched->second : TelephonyUpdateEventType::NONE_EVENT_TYPE);
 }
@@ -548,6 +550,69 @@ static napi_value OffVoIPStateChange(napi_env env, napi_callback_info info)
     }
 }
 
+static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
+{
+    TELEPHONY_LOGI("onCallTransferChange enter");
+    size_t parameterCount = PARAMETER_COUNT_TWO;
+    napi_value parameters[] = { nullptr, nullptr };
+    napi_get_cb_info(env, info, &parameterCount, parameters, nullptr, nullptr);
+    std::unique_ptr<ObserverContext> asyncContext = std::make_unique<ObserverContext>();
+    if (asyncContext == nullptr) {
+        TELEPHONY_LOGE("onCallTransferChange asyncContext is nullptr.");
+        NapiUtil::ThrowParameterError(env);
+        return nullptr;
+    }
+    std::optional<NapiError> errCode;
+    if (parameterCount == std::size(parameters)) {
+        errCode = MatchParametersWithObject(env, parameters, parameterCount, asyncContext);
+    } else {
+        errCode = MatchParametersWithoutObject(env, parameters, parameterCount, asyncContext);
+    }
+
+    if (errCode.has_value()) {
+        TELEPHONY_LOGE("onCallTransferChange parameter matching failed.");
+        NapiUtil::ThrowParameterError(env);
+        return nullptr;
+    }
+    ObserverContext *observerContext = asyncContext.release();
+    observerContext->eventType = GetEventType("callTransferChange");
+    NativeOn(env, observerContext);
+    OnCallback(env, observerContext);
+    return NapiUtil::CreateUndefined(env);
+}
+
+static napi_value OffCallTransferChange(napi_env env, napi_callback_info info)
+{
+    TELEPHONY_LOGI("offCallTransferChange enter");
+    size_t parameterCount = PARAMETER_COUNT_ONE;
+    napi_value parameters[] = { nullptr };
+    napi_get_cb_info(env, info, &parameterCount, parameters, nullptr, nullptr);
+
+    std::unique_ptr<ObserverContext> asyncContext = std::make_unique<ObserverContext>();
+    if (asyncContext == nullptr) {
+        TELEPHONY_LOGE("asyncContext is nullptr.");
+        NapiUtil::ThrowParameterError(env);
+        return nullptr;
+    }
+    napi_valuetype valueTypeTemp = napi_undefined;
+    napi_typeof(env, parameters[0], &valueTypeTemp);
+    if (valueTypeTemp == napi_undefined || valueTypeTemp == napi_null || valueTypeTemp == napi_function) {
+        ObserverContext *observerContext = asyncContext.release();
+        observerContext->eventType = GetEventType("callTransferChange");
+        if (observerContext->eventType != TelephonyUpdateEventType::NONE_EVENT_TYPE) {
+            NativeOff(env, observerContext);
+        } else {
+            NapiUtil::ThrowParameterError(env);
+        }
+        OffCallback(env, observerContext);
+        return NapiUtil::CreateUndefined(env);
+    } else {
+        TELEPHONY_LOGE("parameter matching failed.");
+        NapiUtil::ThrowParameterError(env);
+        return nullptr;
+    }
+}
+
 napi_status InitEnumLockReason(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -616,6 +681,8 @@ napi_value InitNapiStateRegistry(napi_env env, napi_value exports)
         DECLARE_NAPI_WRITABLE_FUNCTION("offGetSimActiveState", OffSimActiveState),
         DECLARE_NAPI_WRITABLE_FUNCTION("onVoIPStateChange", OnVoIPStateChange),
         DECLARE_NAPI_WRITABLE_FUNCTION("offVoIPStateChange", OffVoIPStateChange),
+        DECLARE_NAPI_WRITABLE_FUNCTION("onCallTransferChange", OnCallTransferChange),
+        DECLARE_NAPI_WRITABLE_FUNCTION("offCallTransferChange", OffCallTransferChange),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     NAPI_CALL(env, InitEnumLockReason(env, exports));

@@ -113,6 +113,11 @@ struct VoIPCallStateUpdateInfo : public UpdateInfo {
           isVoiceAnswerSupported_(isVoiceAnswerSupported)
     {}
 };
+
+struct CallTransferStatusUpdateInfo : public UpdateInfo {
+    bool enabled_ = false;
+    CallTransferStatusUpdateInfo(int32_t slotId, bool enabled) : UpdateInfo(slotId), enabled_(enabled) {}
+};
 } // namespace Telephony
 } // namespace OHOS
 #endif // UPDATE_INFOS_H

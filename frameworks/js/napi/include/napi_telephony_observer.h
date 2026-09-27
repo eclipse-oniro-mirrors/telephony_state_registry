@@ -41,6 +41,7 @@ public:
     void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber) override;
     void OnSimActiveStateUpdated(int32_t slotId, bool enable) override;
     void OnVoIPStateUpdated(const VoIPCallStateInfo &info) override;
+    void OnCallTransferStatusUpdated(int32_t slotId, bool enabled) override;
 };
 } // namespace Telephony
 } // namespace OHOS

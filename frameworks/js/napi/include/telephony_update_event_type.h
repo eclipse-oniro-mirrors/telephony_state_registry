@@ -37,6 +37,7 @@ enum class TelephonyUpdateEventType {
     EVENT_CCALL_STATE_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_CCALL_STATE,
     EVENT_SIM_ACTIVE_STATE = TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE,
     EVENT_VOIP_CALL_STATE_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_VOIP_CALL_STATE,
+    EVENT_CALL_TRANSFER_STATUS_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS,
 };
 
 const std::set<TelephonyUpdateEventType> ENABLE_ON_DEFAULT_DATA_EVENT_SET {

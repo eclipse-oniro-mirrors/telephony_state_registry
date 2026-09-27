@@ -76,6 +76,7 @@ TelephonyStateRegistryService::~TelephonyStateRegistryService()
     callIncomingNumber_.clear();
     signalInfos_.clear();
     searchNetworkState_.clear();
+    callTransferStatus_.clear();
 }
 
 void TelephonyStateRegistryService::OnStart()
@@ -547,6 +548,33 @@ int32_t TelephonyStateRegistryService::UpdateVoIPCallState(const VoIPCallStateIn
     return result;
 }
 
+int32_t TelephonyStateRegistryService::UpdateCallTransferStatus(int32_t slotId, bool enabled)
+{
+    if (!VerifySlotId(slotId)) {
+        TELEPHONY_LOGE("UpdateCallTransferStatus##VerifySlotId failed ##slotId = %{public}d", slotId);
+        return TELEPHONY_STATE_REGISTRY_SLODID_ERROR;
+    }
+    if (!TelephonyPermission::CheckPermission(Permission::SET_TELEPHONY_STATE)) {
+        TELEPHONY_LOGE("UpdateCallTransferStatus##Check permission failed.");
+        return TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED;
+    }
+    std::shared_lock<std::shared_mutex> lock(lock_);
+    callTransferStatus_[slotId] = enabled;
+    int32_t result = TELEPHONY_STATE_REGISTRY_DATA_NOT_EXIST;
+    for (size_t i = 0; i < stateRecords_.size(); i++) {
+        TelephonyStateRegistryRecord record = stateRecords_[i];
+        int32_t externalSlotId = GetExternalSlotId(slotId, record.uid_);
+        if (record.IsExistStateListener(TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) &&
+            (record.slotId_ == externalSlotId) && record.telephonyObserver_ != nullptr) {
+            record.telephonyObserver_->OnCallTransferStatusUpdated(externalSlotId, enabled);
+            result = TELEPHONY_SUCCESS;
+        }
+    }
+    TELEPHONY_LOGI("TelephonyStateRegistryService::UpdateCallTransferStatus end##slotId:%{public}d, "
+                   "enabled:%{public}d, result=%{public}d", slotId, enabled, result);
+    return result;
+}
+
 bool TelephonyStateRegistryService::CheckCallerIsSystemApp(uint32_t mask)
 {
     if ((mask & TelephonyObserverBroker::OBSERVER_MASK_CELL_INFO) != 0) {
@@ -565,6 +593,13 @@ bool TelephonyStateRegistryService::CheckCallerIsSystemApp(uint32_t mask)
         if (!TelephonyPermission::CheckCallerIsSystemApp()) {
             TELEPHONY_LOGE(
                 "The listening event is voiceMailMsgIndicatorChange. Non-system applications use system APIs!");
+            return false;
+        }
+    }
+    if ((mask & TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) != 0) {
+        if (!TelephonyPermission::CheckCallerIsSystemApp()) {
+            TELEPHONY_LOGE(
+                "The listening event is callTransferChange. Non-system applications use system APIs!");
             return false;
         }
     }
@@ -694,6 +729,13 @@ bool TelephonyStateRegistryService::CheckPermission(uint32_t mask)
             return false;
         }
     }
+    if ((mask & TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) != 0) {
+        if (!TelephonyPermission::CheckPermission(Permission::GET_TELEPHONY_STATE)) {
+            TELEPHONY_LOGE("Check permission failed,"
+                "you must declare ohos.permission.GET_TELEPHONY_STATE permission for call transfer status");
+            return false;
+        }
+    }
     return true;
 }
 
@@ -787,6 +829,10 @@ void TelephonyStateRegistryService::UpdateDataEx(const TelephonyStateRegistryRec
     if ((record.mask_ & TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE) != 0) {
         TELEPHONY_LOGI("RegisterStateChange##Notify-OBSERVER_MASK_SIM_ACTIVE_STATE");
         record.telephonyObserver_->OnSimActiveStateUpdated(record.slotId_, simActiveResult_[record.slotId_]);
+    }
+    if ((record.mask_ & TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) != 0) {
+        TELEPHONY_LOGI("RegisterStateChange##Notify-OBSERVER_MASK_CALL_TRANSFER_STATUS");
+        record.telephonyObserver_->OnCallTransferStatusUpdated(record.slotId_, callTransferStatus_[record.slotId_]);
     }
 }
 

@@ -63,6 +63,8 @@ TelephonyStateRegistryStub::TelephonyStateRegistryStub()
         [this](MessageParcel &data, MessageParcel &reply) { return OnSimActiveStateUpdated(data, reply); };
     memberFuncMap_[StateNotifyInterfaceCode::VOIP_CALL_STATE] =
         [this](MessageParcel &data, MessageParcel &reply) { return OnUpdateVoIPCallState(data, reply); };
+    memberFuncMap_[StateNotifyInterfaceCode::CALL_TRANSFER_STATUS] =
+        [this](MessageParcel &data, MessageParcel &reply) { return OnUpdateCallTransferStatus(data, reply); };
 }
 
 TelephonyStateRegistryStub::~TelephonyStateRegistryStub()
@@ -484,6 +486,16 @@ int32_t TelephonyStateRegistryStub::OnUpdateVoIPCallState(MessageParcel &data, M
     info.callType = static_cast<VoIPCallType>(callType);
     info.callState = static_cast<VoIPCallState>(callState);
     int32_t ret = UpdateVoIPCallState(info);
+    reply.WriteInt32(ret);
+    return NO_ERROR;
+}
+
+int32_t TelephonyStateRegistryStub::OnUpdateCallTransferStatus(MessageParcel &data, MessageParcel &reply)
+{
+    int32_t slotId = data.ReadInt32();
+    bool enabled = data.ReadBool();
+    int32_t ret = UpdateCallTransferStatus(slotId, enabled);
+    TELEPHONY_LOGI("TelephonyStateRegistryStub::OnUpdateCallTransferStatus end##ret=%{public}d", ret);
     reply.WriteInt32(ret);
     return NO_ERROR;
 }

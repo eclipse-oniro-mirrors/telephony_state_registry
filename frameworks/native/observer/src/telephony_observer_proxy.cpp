@@ -316,5 +316,23 @@ void TelephonyObserverProxy::OnVoIPStateUpdated(const VoIPCallStateInfo &info)
         static_cast<int32_t>(ObserverBrokerCode::ON_VOIP_STATE_UPDATED), dataParcel, replyParcel, option);
     TELEPHONY_LOGI("TelephonyObserverProxy::OnVoIPStateUpdated##error: %{public}d.", code);
 }
+
+void TelephonyObserverProxy::OnCallTransferStatusUpdated(int32_t slotId, bool enabled)
+{
+    MessageOption option;
+    MessageParcel dataParcel;
+    MessageParcel replyParcel;
+    option.SetFlags(MessageOption::TF_ASYNC);
+    if (!dataParcel.WriteInterfaceToken(GetDescriptor())) {
+        TELEPHONY_LOGE("TelephonyObserverProxy::OnCallTransferStatusUpdated WriteInterfaceToken failed!");
+        return;
+    }
+    dataParcel.WriteInt32(slotId);
+    dataParcel.WriteBool(enabled);
+    auto code = SendRequest(
+        static_cast<int32_t>(ObserverBrokerCode::ON_CALL_TRANSFER_STATUS_UPDATED),
+        dataParcel, replyParcel, option);
+    TELEPHONY_LOGI("TelephonyObserverProxy::OnCallTransferStatusUpdated##error: %{public}d.", code);
+}
 } // namespace Telephony
 } // namespace OHOS

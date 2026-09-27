@@ -711,6 +711,49 @@ declare namespace observer {
   function off(type: 'iccAccountInfoChange', callback?: Callback<void>): void;
 
   /**
+   * Callback when the call forwarding status is updated. This callback is invoked when
+   * the unconditional call forwarding status of a specified card updates and the observer
+   * is added to monitor the updates.
+   *
+   * @permission ohos.permission.GET_CALL_TRANSFER_INFO
+   * @param { ObserverOptions } options - Indicates the options for observer.
+   * @param { Callback<boolean> } callback - Indicates the callback for getting the call
+   * transfer status, where the boolean value indicates whether the unconditional call
+   * transfer is enabled.
+   * @throws { BusinessError } 201 - Permission denied.
+   * @throws { BusinessError } 202 - Non-system applications use system APIs.
+   * @throws { BusinessError } 401 - Parameter error. Possible causes: 1. Mandatory parameters are left unspecified.
+   *     2. Incorrect parameter types.
+   * @throws { BusinessError } 8300001 - Invalid parameter value.
+   * @throws { BusinessError } 8300002 - Operation failed. Cannot connect to service.
+   * @throws { BusinessError } 8300003 - System internal error.
+   * @throws { BusinessError } 8300999 - Unknown error code.
+   * @syscap SystemCapability.Telephony.StateRegistry
+   * @systemapi Hide this for inner system use.
+   * @since 26 dynamic
+   */
+  function onCallTransferChange(options: ObserverOptions, callback: Callback<boolean>): void;
+
+  /**
+   * Cancel callback when the call forwarding status is updated.
+   *
+   * @permission ohos.permission.GET_CALL_TRANSFER_INFO
+   * @param { Callback<boolean> } callback - Indicates the callback to unsubscribe from
+   * the callTransferChange event.
+   * @throws { BusinessError } 202 - Non-system applications use system APIs.
+   * @throws { BusinessError } 401 - Parameter error. Possible causes: 1. Mandatory parameters are left unspecified.
+   *     2. Incorrect parameter types.
+   * @throws { BusinessError } 8300001 - Invalid parameter value.
+   * @throws { BusinessError } 8300002 - Operation failed. Cannot connect to service.
+   * @throws { BusinessError } 8300003 - System internal error.
+   * @throws { BusinessError } 8300999 - Unknown error code.
+   * @syscap SystemCapability.Telephony.StateRegistry
+   * @systemapi Hide this for inner system use.
+   * @since 26 dynamic
+   */
+  function offCallTransferChange(callback?: Callback<boolean>): void;
+  
+  /**
    * Indicates SIM card type and status.
    *
    * @interface SimStateData

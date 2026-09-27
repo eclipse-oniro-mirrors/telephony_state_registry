@@ -197,5 +197,18 @@ void NapiTelephonyObserver::OnVoIPStateUpdated(const VoIPCallStateInfo &info)
     EventListenerManager::SendEvent(
         ToUint32t(TelephonyCallbackEventId::EVENT_ON_VOIP_CALL_STATE_UPDATE), voipCallStateUpdateInfo);
 }
+
+void NapiTelephonyObserver::OnCallTransferStatusUpdated(int32_t slotId, bool enabled)
+{
+    TELEPHONY_LOGI("OnCallTransferStatusUpdated slotId = %{public}d, enabled = %{public}d", slotId, enabled);
+    std::unique_ptr<CallTransferStatusUpdateInfo> callTransferUpdateInfo =
+        std::make_unique<CallTransferStatusUpdateInfo>(slotId, enabled);
+    if (callTransferUpdateInfo == nullptr) {
+        TELEPHONY_LOGE("callTransferUpdateInfo is nullptr!");
+        return;
+    }
+    EventListenerManager::SendEvent(
+        ToUint32t(TelephonyCallbackEventId::EVENT_ON_CALL_TRANSFER_STATUS_UPDATE), callTransferUpdateInfo);
+}
 } // namespace Telephony
 } // namespace OHOS
