@@ -364,6 +364,13 @@ void EventListenerHandler::AddBasicHandlerToMap()
             HandleCallbackInfoUpdate<VoiceMailMsgIndicatorContext, VoiceMailMsgIndicatorUpdate,
                 TelephonyUpdateEventType::EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE>(event);
         };
+    AddCallTransferHandlerToMap();
+    AddSimActiveStateHandlerToMap();
+    AddVoIPStateHandlerToMap();
+}
+
+void EventListenerHandler::AddCallTransferHandlerToMap()
+{
     handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_ICC_ACCOUNT_UPDATE] =
         [this](const AppExecFwk::InnerEvent::Pointer &event) {
             HandleCallbackVoidUpdate<TelephonyUpdateEventType::EVENT_ICC_ACCOUNT_CHANGE>(event);
@@ -383,8 +390,6 @@ void EventListenerHandler::AddBasicHandlerToMap()
             HandleCallbackInfoUpdate<CallTransferStatusContext, CallTransferStatusUpdateInfo,
                 TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE>(event);
         };
-    AddSimActiveStateHandlerToMap();
-    AddVoIPStateHandlerToMap();
 }
 
 void EventListenerHandler::AddSimActiveStateHandlerToMap()

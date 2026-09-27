@@ -63,6 +63,7 @@ private:
 
 private:
     void AddBasicHandlerToMap();
+    void AddCallTransferHandlerToMap();
     void AddSimActiveStateHandlerToMap();
     void AddVoIPStateHandlerToMap();
     void AddNetworkHandlerToMap();
