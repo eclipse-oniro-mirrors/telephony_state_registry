@@ -1116,7 +1116,6 @@ void EventListenerHandler::WorkVoIPStateUpdated(uv_work_t *work, std::unique_loc
     std::unique_ptr<VoIPCallStateContext> voipCallStateInfo(static_cast<VoIPCallStateContext *>(work->data));
     if (voipCallStateInfo == nullptr) {
         TELEPHONY_LOGE("voipCallStateInfo is null");
- 
         return;
     }
     const napi_env &env = voipCallStateInfo->env;

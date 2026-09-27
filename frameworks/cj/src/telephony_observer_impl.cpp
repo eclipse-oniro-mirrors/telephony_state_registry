@@ -155,7 +155,6 @@ static void NativeOn(EventListener listener, int32_t &errCode)
 
 static int32_t On(std::string_view event, ObserverOptions options, int64_t funcId)
 {
-    TELEPHONY_LOGE("hjh on.");
     int32_t errCode = TELEPHONY_SUCCESS;
     std::shared_ptr<bool> isDeleting = std::make_shared<bool>(false);
     auto func = reinterpret_cast<void(*)(void*)>(funcId);

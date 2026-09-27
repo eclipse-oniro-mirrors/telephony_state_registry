@@ -58,7 +58,6 @@ const std::map<std::string_view, TelephonyUpdateEventType> eventMap {
 
 TelephonyUpdateEventType GetEventType(std::string_view event)
 {
-    TELEPHONY_LOGI("hjh, GetEventType=%{public}s", std::string(event).c_str());
     auto serched = eventMap.find(event);
     return (serched != eventMap.end() ? serched->second : TelephonyUpdateEventType::NONE_EVENT_TYPE);
 }
@@ -552,7 +551,6 @@ static napi_value OffVoIPStateChange(napi_env env, napi_callback_info info)
 
 static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
 {
-    TELEPHONY_LOGI("onCallTransferChange enter");
     size_t parameterCount = PARAMETER_COUNT_TWO;
     napi_value parameters[] = { nullptr, nullptr };
     napi_get_cb_info(env, info, &parameterCount, parameters, nullptr, nullptr);
@@ -583,7 +581,6 @@ static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
 
 static napi_value OffCallTransferChange(napi_env env, napi_callback_info info)
 {
-    TELEPHONY_LOGI("offCallTransferChange enter");
     size_t parameterCount = PARAMETER_COUNT_ONE;
     napi_value parameters[] = { nullptr };
     napi_get_cb_info(env, info, &parameterCount, parameters, nullptr, nullptr);
