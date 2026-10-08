@@ -563,10 +563,9 @@ int32_t TelephonyStateRegistryService::UpdateCallTransferStatus(int32_t slotId, 
     int32_t result = TELEPHONY_STATE_REGISTRY_DATA_NOT_EXIST;
     for (size_t i = 0; i < stateRecords_.size(); i++) {
         TelephonyStateRegistryRecord record = stateRecords_[i];
-        int32_t externalSlotId = GetExternalSlotId(slotId, record.uid_);
         if (record.IsExistStateListener(TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) &&
-            (record.slotId_ == externalSlotId) && record.telephonyObserver_ != nullptr) {
-            record.telephonyObserver_->OnCallTransferStatusUpdated(externalSlotId, enabled);
+            (record.slotId_ == slotId) && record.telephonyObserver_ != nullptr) {
+            record.telephonyObserver_->OnCallTransferStatusUpdated(slotId, enabled);
             result = TELEPHONY_SUCCESS;
         }
     }
