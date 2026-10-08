@@ -364,13 +364,6 @@ void EventListenerHandler::AddBasicHandlerToMap()
             HandleCallbackInfoUpdate<VoiceMailMsgIndicatorContext, VoiceMailMsgIndicatorUpdate,
                 TelephonyUpdateEventType::EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE>(event);
         };
-    AddCallTransferHandlerToMap();
-    AddSimActiveStateHandlerToMap();
-    AddVoIPStateHandlerToMap();
-}
-
-void EventListenerHandler::AddCallTransferHandlerToMap()
-{
     handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_ICC_ACCOUNT_UPDATE] =
         [this](const AppExecFwk::InnerEvent::Pointer &event) {
             HandleCallbackVoidUpdate<TelephonyUpdateEventType::EVENT_ICC_ACCOUNT_CHANGE>(event);
@@ -385,11 +378,9 @@ void EventListenerHandler::AddCallTransferHandlerToMap()
             HandleCallbackInfoUpdate<CallStateContext, CallStateUpdateInfo,
                 TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE>(event);
         };
-    handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_CALL_TRANSFER_STATUS_UPDATE] =
-        [this](const AppExecFwk::InnerEvent::Pointer &event) {
-            HandleCallbackInfoUpdate<CallTransferStatusContext, CallTransferStatusUpdateInfo,
-                TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE>(event);
-        };
+    AddSimActiveStateHandlerToMap();
+    AddVoIPStateHandlerToMap();
+    AddCallTransferHandlerToMap();
 }
 
 void EventListenerHandler::AddSimActiveStateHandlerToMap()
@@ -407,6 +398,15 @@ void EventListenerHandler::AddVoIPStateHandlerToMap()
         [this](const AppExecFwk::InnerEvent::Pointer &event) {
             HandleCallbackInfoUpdate<VoIPCallStateContext, VoIPCallStateUpdateInfo,
                 TelephonyUpdateEventType::EVENT_VOIP_CALL_STATE_UPDATE>(event);
+        };
+}
+
+void EventListenerHandler::AddCallTransferHandlerToMap()
+{
+    handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_CALL_TRANSFER_STATUS_UPDATE] =
+        [this](const AppExecFwk::InnerEvent::Pointer &event) {
+            HandleCallbackInfoUpdate<CallTransferStatusContext, CallTransferStatusUpdateInfo,
+                TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE>(event);
         };
 }
 
