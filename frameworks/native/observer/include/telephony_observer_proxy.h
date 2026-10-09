@@ -50,7 +50,9 @@ public:
     void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber);
     void OnSimActiveStateUpdated(int32_t slotId, bool enable);
     void OnVoIPStateUpdated(const VoIPCallStateInfo &info);
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     void OnCallTransferStatusUpdated(int32_t slotId, bool enabled);
+#endif
 
 private:
     int32_t SendRequest(int32_t msgId, MessageParcel &dataParcel, MessageParcel &replyParcel, MessageOption &option);

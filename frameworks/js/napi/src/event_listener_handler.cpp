@@ -403,11 +403,13 @@ void EventListenerHandler::AddVoIPStateHandlerToMap()
 
 void EventListenerHandler::AddCallTransferHandlerToMap()
 {
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_CALL_TRANSFER_STATUS_UPDATE] =
         [this](const AppExecFwk::InnerEvent::Pointer &event) {
             HandleCallbackInfoUpdate<CallTransferStatusContext, CallTransferStatusUpdateInfo,
                 TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE>(event);
         };
+#endif
 }
 
 void EventListenerHandler::AddNetworkHandlerToMap()
@@ -449,8 +451,10 @@ void EventListenerHandler::AddWorkFuncToMap()
     workFuncMap_[TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE] = &EventListenerHandler::WorkSimActiveUpdated;
     workFuncMap_[TelephonyUpdateEventType::EVENT_VOIP_CALL_STATE_UPDATE] =
         &EventListenerHandler::WorkVoIPStateUpdated;
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     workFuncMap_[TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE] =
         &EventListenerHandler::WorkCallTransferStatusUpdated;
+#endif
 }
 
 void EventListenerHandler::ProcessEvent(const AppExecFwk::InnerEvent::Pointer &event)
@@ -510,8 +514,11 @@ int32_t EventListenerHandler::RegisterEventListener(EventListener &eventListener
             eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE ||
             eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE ||
             eventListener.eventType == TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE ||
-            eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE ||
-            eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE);
+            eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
+            || eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE
+#endif
+        );
         int32_t addResult = TelephonyStateManager::AddStateObserver(
             observer, eventListener.slotId, ToUint32t(eventListener.eventType), isUpdate);
         if (addResult != TELEPHONY_SUCCESS) {
@@ -1145,6 +1152,7 @@ void EventListenerHandler::WorkVoIPStateUpdated(uv_work_t *work, std::unique_loc
     napi_close_handle_scope(env, scope);
 }
 
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 void EventListenerHandler::WorkCallTransferStatusUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock)
 {
     if (work == nullptr) {
@@ -1169,5 +1177,6 @@ void EventListenerHandler::WorkCallTransferStatusUpdated(uv_work_t *work, std::u
     NapiReturnToJS(callTransferInfo->env, callTransferInfo->callbackRef, callbackValue, lock);
     napi_close_handle_scope(env, scope);
 }
+#endif
 } // namespace Telephony
 } // namespace OHOS

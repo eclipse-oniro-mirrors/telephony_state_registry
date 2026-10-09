@@ -95,7 +95,9 @@ private:
     static void WorkCCallStateUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
     static void WorkSimActiveUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
     static void WorkVoIPStateUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     static void WorkCallTransferStatusUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock);
+#endif
 
     template<typename T, typename D, TelephonyUpdateEventType eventType>
     void HandleCallbackInfoUpdate(const AppExecFwk::InnerEvent::Pointer &event);

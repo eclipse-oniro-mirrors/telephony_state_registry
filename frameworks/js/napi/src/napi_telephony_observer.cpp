@@ -198,6 +198,7 @@ void NapiTelephonyObserver::OnVoIPStateUpdated(const VoIPCallStateInfo &info)
         ToUint32t(TelephonyCallbackEventId::EVENT_ON_VOIP_CALL_STATE_UPDATE), voipCallStateUpdateInfo);
 }
 
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 void NapiTelephonyObserver::OnCallTransferStatusUpdated(int32_t slotId, bool enabled)
 {
     TELEPHONY_LOGI("OnCallTransferStatusUpdated slotId = %{public}d, enabled = %{public}d", slotId, enabled);
@@ -210,5 +211,6 @@ void NapiTelephonyObserver::OnCallTransferStatusUpdated(int32_t slotId, bool ena
     EventListenerManager::SendEvent(
         ToUint32t(TelephonyCallbackEventId::EVENT_ON_CALL_TRANSFER_STATUS_UPDATE), callTransferUpdateInfo);
 }
+#endif
 } // namespace Telephony
 } // namespace OHOS

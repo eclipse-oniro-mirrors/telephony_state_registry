@@ -23,10 +23,18 @@ declare_args() {
 
 telephony_extra_defines = []
 
+state_registry_call_transfer_status_report =
+    (target_platform == "phone" || target_platform == "tablet")
+
 if (defined(global_parts_info) &&
     defined(global_parts_info.telephony_telephony_enhanced)) {
   telephony_extra_defines += [ "OHOS_BUILD_ENABLE_TELEPHONY_EXT" ]
   telephony_extra_defines += [ "OHOS_BUILD_ENABLE_TELEPHONY_VSIM" ]
+}
+
+if (state_registry_call_transfer_status_report) {
+  print("state_registry support call transfer status report")
+  telephony_extra_defines += [ "TELEPHONY_CALL_TRANSFER_STATUS_REPORT" ]
 }
 
 ohos_shared_library("tel_state_registry") {

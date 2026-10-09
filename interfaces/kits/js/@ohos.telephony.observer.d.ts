@@ -716,7 +716,9 @@ declare namespace observer {
    * is added to monitor the updates.
    *
    * @permission ohos.permission.GET_CALL_TRANSFER_INFO
-   * @param { ObserverOptions } options - Indicates the options for observer.
+   * @param { int } slotId - Card slot ID.
+   *     <br>- **0**: card slot 1.
+   *     <br>- **1**: card slot 2
    * @param { Callback<boolean> } callback - Indicates the callback for getting the call
    * transfer status, where the boolean value indicates whether the unconditional call
    * transfer is enabled.
@@ -732,7 +734,7 @@ declare namespace observer {
    * @systemapi Hide this for inner system use.
    * @since 26 dynamic
    */
-  function onCallTransferChange(options: ObserverOptions, callback: Callback<boolean>): void;
+  function onCallTransferChange(slotId: int, callback: Callback<boolean>): void;
 
   /**
    * Cancel callback when the call forwarding status is updated.

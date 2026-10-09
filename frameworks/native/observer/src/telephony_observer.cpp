@@ -56,7 +56,9 @@ void TelephonyObserver::OnSimActiveStateUpdated(int32_t slotId, bool enable) {}
 
 void TelephonyObserver::OnVoIPStateUpdated(const VoIPCallStateInfo &info) {}
 
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 void TelephonyObserver::OnCallTransferStatusUpdated(int32_t slotId, bool enabled) {}
+#endif
 
 TelephonyObserver::TelephonyObserver()
 {
@@ -88,8 +90,10 @@ TelephonyObserver::TelephonyObserver()
         [this](MessageParcel &data, MessageParcel &reply) { OnSimActiveStateUpdatedInner(data, reply); };
     memberFuncMap_[static_cast<uint32_t>(ObserverBrokerCode::ON_VOIP_STATE_UPDATED)] =
         [this](MessageParcel &data, MessageParcel &reply) { OnVoIPStateUpdatedInner(data, reply); };
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     memberFuncMap_[static_cast<uint32_t>(ObserverBrokerCode::ON_CALL_TRANSFER_STATUS_UPDATED)] =
         [this](MessageParcel &data, MessageParcel &reply) { OnCallTransferStatusUpdatedInner(data, reply); };
+#endif
 }
 
 TelephonyObserver::~TelephonyObserver() {}
@@ -226,12 +230,14 @@ void TelephonyObserver::OnVoIPStateUpdatedInner(MessageParcel &data, MessageParc
     OnVoIPStateUpdated(info);
 }
 
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 void TelephonyObserver::OnCallTransferStatusUpdatedInner(MessageParcel &data, MessageParcel &reply)
 {
     int32_t slotId = data.ReadInt32();
     bool enabled = data.ReadBool();
     OnCallTransferStatusUpdated(slotId, enabled);
 }
+#endif
 
 void TelephonyObserver::ConvertSignalInfoList(
     MessageParcel &data, std::vector<sptr<SignalInformation>> &result)

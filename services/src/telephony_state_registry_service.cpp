@@ -76,7 +76,9 @@ TelephonyStateRegistryService::~TelephonyStateRegistryService()
     callIncomingNumber_.clear();
     signalInfos_.clear();
     searchNetworkState_.clear();
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     callTransferStatus_.clear();
+#endif
 }
 
 void TelephonyStateRegistryService::OnStart()
@@ -548,6 +550,7 @@ int32_t TelephonyStateRegistryService::UpdateVoIPCallState(const VoIPCallStateIn
     return result;
 }
 
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 int32_t TelephonyStateRegistryService::UpdateCallTransferStatus(int32_t slotId, bool enabled)
 {
     if (!VerifySlotId(slotId)) {
@@ -573,6 +576,7 @@ int32_t TelephonyStateRegistryService::UpdateCallTransferStatus(int32_t slotId, 
                    "enabled:%{public}d, result=%{public}d", slotId, enabled, result);
     return result;
 }
+#endif
 
 bool TelephonyStateRegistryService::CheckCallerIsSystemApp(uint32_t mask)
 {
@@ -595,6 +599,7 @@ bool TelephonyStateRegistryService::CheckCallerIsSystemApp(uint32_t mask)
             return false;
         }
     }
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     if ((mask & TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) != 0) {
         if (!TelephonyPermission::CheckCallerIsSystemApp()) {
             TELEPHONY_LOGE(
@@ -602,6 +607,7 @@ bool TelephonyStateRegistryService::CheckCallerIsSystemApp(uint32_t mask)
             return false;
         }
     }
+#endif
     return true;
 }
 
@@ -728,6 +734,7 @@ bool TelephonyStateRegistryService::CheckPermission(uint32_t mask)
             return false;
         }
     }
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     if ((mask & TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) != 0) {
         if (!TelephonyPermission::CheckPermission(Permission::GET_TELEPHONY_STATE)) {
             TELEPHONY_LOGE("Check permission failed,"
@@ -735,6 +742,7 @@ bool TelephonyStateRegistryService::CheckPermission(uint32_t mask)
             return false;
         }
     }
+#endif
     return true;
 }
 
@@ -829,10 +837,12 @@ void TelephonyStateRegistryService::UpdateDataEx(const TelephonyStateRegistryRec
         TELEPHONY_LOGI("RegisterStateChange##Notify-OBSERVER_MASK_SIM_ACTIVE_STATE");
         record.telephonyObserver_->OnSimActiveStateUpdated(record.slotId_, simActiveResult_[record.slotId_]);
     }
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     if ((record.mask_ & TelephonyObserverBroker::OBSERVER_MASK_CALL_TRANSFER_STATUS) != 0) {
         TELEPHONY_LOGI("RegisterStateChange##Notify-OBSERVER_MASK_CALL_TRANSFER_STATUS");
         record.telephonyObserver_->OnCallTransferStatusUpdated(record.slotId_, callTransferStatus_[record.slotId_]);
     }
+#endif
 }
 
 bool TelephonyStateRegistryService::PublishCommonEvent(

@@ -114,10 +114,12 @@ struct VoIPCallStateUpdateInfo : public UpdateInfo {
     {}
 };
 
+#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 struct CallTransferStatusUpdateInfo : public UpdateInfo {
     bool enabled_ = false;
     CallTransferStatusUpdateInfo(int32_t slotId, bool enabled) : UpdateInfo(slotId), enabled_(enabled) {}
 };
+#endif
 } // namespace Telephony
 } // namespace OHOS
 #endif // UPDATE_INFOS_H
