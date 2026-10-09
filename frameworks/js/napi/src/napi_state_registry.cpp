@@ -560,12 +560,8 @@ static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
         NapiUtil::ThrowParameterError(env);
         return nullptr;
     }
-    std::optional<NapiError> errCode;
-    if (parameterCount == std::size(parameters)) {
-        errCode = MatchParametersWithObject(env, parameters, parameterCount, asyncContext);
-    } else {
-        errCode = MatchParametersWithoutObject(env, parameters, parameterCount, asyncContext);
-    }
+    auto paraTuple = std::make_tuple(&asyncContext->slotId, &asyncContext->callbackRef);
+    auto errCode = MatchParameters(env, parameters, parameterCount, paraTuple);
 
     if (errCode.has_value()) {
         TELEPHONY_LOGE("onCallTransferChange parameter matching failed.");
@@ -574,8 +570,9 @@ static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
     }
 #ifndef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     TELEPHONY_LOGE("onCallTransferChange is not supported on this platform.");
-    NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_UNKNOW_ERROR, "Unknown error code.");
-    return nullptr;
+    asyncContext->eventType = GetEventType("callTransferChange");
+    OnCallback(env, asyncContext.release());
+    return NapiUtil::CreateUndefined(env);
 #endif
     ObserverContext *observerContext = asyncContext.release();
     observerContext->eventType = GetEventType("callTransferChange");
@@ -601,8 +598,9 @@ static napi_value OffCallTransferChange(napi_env env, napi_callback_info info)
     if (valueTypeTemp == napi_undefined || valueTypeTemp == napi_null || valueTypeTemp == napi_function) {
 #ifndef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
         TELEPHONY_LOGE("offCallTransferChange is not supported on this platform.");
-        NapiUtil::ThrowError(env, JS_ERROR_TELEPHONY_UNKNOW_ERROR, "Unknown error code.");
-        return nullptr;
+        asyncContext->eventType = GetEventType("callTransferChange");
+        OnCallback(env, asyncContext.release());
+        return NapiUtil::CreateUndefined(env);
 #endif
         ObserverContext *observerContext = asyncContext.release();
         observerContext->eventType = GetEventType("callTransferChange");
