@@ -155,7 +155,6 @@ public:
      */
     void OnVoIPStateUpdated(const VoIPCallStateInfo &info) override;
     
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     /**
      * @brief Called when call transfer status is updated.
      *
@@ -163,7 +162,6 @@ public:
      * @param enabled Indicates whether the unconditional call transfer is enabled.
      */
     void OnCallTransferStatusUpdated(int32_t slotId, bool enabled) override;
-#endif
 
 private:
     using TelephonyObserverFunc = std::function<void(MessageParcel &data, MessageParcel &reply)>;
@@ -186,9 +184,7 @@ private:
     void OnCCallStateUpdatedInner(MessageParcel &data, MessageParcel &reply);
     void OnSimActiveStateUpdatedInner(MessageParcel &data, MessageParcel &reply);
     void OnVoIPStateUpdatedInner(MessageParcel &data, MessageParcel &reply);
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     void OnCallTransferStatusUpdatedInner(MessageParcel &data, MessageParcel &reply);
-#endif
     static constexpr int32_t CELL_NUM_MAX = 100;
     static constexpr int32_t SIGNAL_NUM_MAX = 100;
     std::map<uint32_t, TelephonyObserverFunc> memberFuncMap_;

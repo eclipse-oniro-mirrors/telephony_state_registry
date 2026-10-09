@@ -317,7 +317,6 @@ void TelephonyObserverProxy::OnVoIPStateUpdated(const VoIPCallStateInfo &info)
     TELEPHONY_LOGI("TelephonyObserverProxy::OnVoIPStateUpdated##error: %{public}d.", code);
 }
 
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 void TelephonyObserverProxy::OnCallTransferStatusUpdated(int32_t slotId, bool enabled)
 {
     MessageOption option;
@@ -335,6 +334,5 @@ void TelephonyObserverProxy::OnCallTransferStatusUpdated(int32_t slotId, bool en
         dataParcel, replyParcel, option);
     TELEPHONY_LOGI("TelephonyObserverProxy::OnCallTransferStatusUpdated##error: %{public}d.", code);
 }
-#endif
 } // namespace Telephony
 } // namespace OHOS

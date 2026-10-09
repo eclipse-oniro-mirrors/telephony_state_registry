@@ -63,10 +63,8 @@ TelephonyStateRegistryStub::TelephonyStateRegistryStub()
         [this](MessageParcel &data, MessageParcel &reply) { return OnSimActiveStateUpdated(data, reply); };
     memberFuncMap_[StateNotifyInterfaceCode::VOIP_CALL_STATE] =
         [this](MessageParcel &data, MessageParcel &reply) { return OnUpdateVoIPCallState(data, reply); };
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     memberFuncMap_[StateNotifyInterfaceCode::CALL_TRANSFER_STATUS] =
         [this](MessageParcel &data, MessageParcel &reply) { return OnUpdateCallTransferStatus(data, reply); };
-#endif
 }
 
 TelephonyStateRegistryStub::~TelephonyStateRegistryStub()
@@ -492,7 +490,6 @@ int32_t TelephonyStateRegistryStub::OnUpdateVoIPCallState(MessageParcel &data, M
     return NO_ERROR;
 }
 
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 int32_t TelephonyStateRegistryStub::OnUpdateCallTransferStatus(MessageParcel &data, MessageParcel &reply)
 {
     int32_t slotId = data.ReadInt32();
@@ -502,6 +499,5 @@ int32_t TelephonyStateRegistryStub::OnUpdateCallTransferStatus(MessageParcel &da
     reply.WriteInt32(ret);
     return NO_ERROR;
 }
-#endif
 } // namespace Telephony
 } // namespace OHOS

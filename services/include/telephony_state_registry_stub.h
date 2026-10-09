@@ -69,9 +69,7 @@ private:
     int32_t OnIccAccountUpdated(MessageParcel &data, MessageParcel &reply);
     int32_t OnSimActiveStateUpdated(MessageParcel &data, MessageParcel &reply);
     int32_t OnUpdateVoIPCallState(MessageParcel &data, MessageParcel &reply);
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
     int32_t OnUpdateCallTransferStatus(MessageParcel &data, MessageParcel &reply);
-#endif
     int32_t SetTimer(uint32_t code);
     void CancelTimer(int32_t id);
 

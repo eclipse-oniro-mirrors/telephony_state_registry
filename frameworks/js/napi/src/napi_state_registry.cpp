@@ -567,12 +567,6 @@ static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
         NapiUtil::ThrowParameterError(env);
         return nullptr;
     }
-#ifndef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
-    TELEPHONY_LOGE("onCallTransferChange is not supported on this platform.");
-    asyncContext->eventType = GetEventType("callTransferChange");
-    OnCallback(env, asyncContext.release());
-    return NapiUtil::CreateUndefined(env);
-#endif
     ObserverContext *observerContext = asyncContext.release();
     observerContext->eventType = GetEventType("callTransferChange");
     NativeOn(env, observerContext);
@@ -595,12 +589,6 @@ static napi_value OffCallTransferChange(napi_env env, napi_callback_info info)
     napi_valuetype valueTypeTemp = napi_undefined;
     napi_typeof(env, parameters[0], &valueTypeTemp);
     if (valueTypeTemp == napi_undefined || valueTypeTemp == napi_null || valueTypeTemp == napi_function) {
-#ifndef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
-        TELEPHONY_LOGE("offCallTransferChange is not supported on this platform.");
-        asyncContext->eventType = GetEventType("callTransferChange");
-        OnCallback(env, asyncContext.release());
-        return NapiUtil::CreateUndefined(env);
-#endif
         ObserverContext *observerContext = asyncContext.release();
         observerContext->eventType = GetEventType("callTransferChange");
         if (observerContext->eventType != TelephonyUpdateEventType::NONE_EVENT_TYPE) {

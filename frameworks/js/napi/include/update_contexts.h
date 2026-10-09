@@ -151,7 +151,6 @@ struct VoIPCallStateContext : EventListener {
     }
 };
 
-#ifdef TELEPHONY_CALL_TRANSFER_STATUS_REPORT
 struct CallTransferStatusContext : EventListener {
     bool enabled;
     CallTransferStatusContext &operator=(const CallTransferStatusUpdateInfo &info)
@@ -160,7 +159,6 @@ struct CallTransferStatusContext : EventListener {
         return *this;
     }
 };
-#endif
 } // namespace Telephony
 } // namespace OHOS
 #endif // UPDATE_CONTEXTS_H
