@@ -562,7 +562,6 @@ static napi_value OnCallTransferChange(napi_env env, napi_callback_info info)
     }
     auto paraTuple = std::make_tuple(&asyncContext->slotId, &asyncContext->callbackRef);
     auto errCode = MatchParameters(env, parameters, parameterCount, paraTuple);
-
     if (errCode.has_value()) {
         TELEPHONY_LOGE("onCallTransferChange parameter matching failed.");
         NapiUtil::ThrowParameterError(env);
