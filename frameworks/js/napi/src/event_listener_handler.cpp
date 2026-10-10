@@ -380,6 +380,7 @@ void EventListenerHandler::AddBasicHandlerToMap()
         };
     AddSimActiveStateHandlerToMap();
     AddVoIPStateHandlerToMap();
+    AddCallTransferHandlerToMap();
 }
 
 void EventListenerHandler::AddSimActiveStateHandlerToMap()
@@ -397,6 +398,15 @@ void EventListenerHandler::AddVoIPStateHandlerToMap()
         [this](const AppExecFwk::InnerEvent::Pointer &event) {
             HandleCallbackInfoUpdate<VoIPCallStateContext, VoIPCallStateUpdateInfo,
                 TelephonyUpdateEventType::EVENT_VOIP_CALL_STATE_UPDATE>(event);
+        };
+}
+
+void EventListenerHandler::AddCallTransferHandlerToMap()
+{
+    handleFuncMap_[TelephonyCallbackEventId::EVENT_ON_CALL_TRANSFER_STATUS_UPDATE] =
+        [this](const AppExecFwk::InnerEvent::Pointer &event) {
+            HandleCallbackInfoUpdate<CallTransferStatusContext, CallTransferStatusUpdateInfo,
+                TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE>(event);
         };
 }
 
@@ -439,6 +449,8 @@ void EventListenerHandler::AddWorkFuncToMap()
     workFuncMap_[TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE] = &EventListenerHandler::WorkSimActiveUpdated;
     workFuncMap_[TelephonyUpdateEventType::EVENT_VOIP_CALL_STATE_UPDATE] =
         &EventListenerHandler::WorkVoIPStateUpdated;
+    workFuncMap_[TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE] =
+        &EventListenerHandler::WorkCallTransferStatusUpdated;
 }
 
 void EventListenerHandler::ProcessEvent(const AppExecFwk::InnerEvent::Pointer &event)
@@ -498,7 +510,8 @@ int32_t EventListenerHandler::RegisterEventListener(EventListener &eventListener
             eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE ||
             eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE ||
             eventListener.eventType == TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE ||
-            eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE);
+            eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_ACTIVE_STATE ||
+            eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_TRANSFER_STATUS_UPDATE);
         int32_t addResult = TelephonyStateManager::AddStateObserver(
             observer, eventListener.slotId, ToUint32t(eventListener.eventType), isUpdate);
         if (addResult != TELEPHONY_SUCCESS) {
@@ -1129,6 +1142,31 @@ void EventListenerHandler::WorkVoIPStateUpdated(uv_work_t *work, std::unique_loc
     SetPropertyToNapiObject(voipCallStateInfo->env, callbackValue, "isVoiceAnswerSupported",
         voipCallStateInfo->isVoiceAnswerSupported);
     NapiReturnToJS(voipCallStateInfo->env, voipCallStateInfo->callbackRef, callbackValue, lock);
+    napi_close_handle_scope(env, scope);
+}
+
+void EventListenerHandler::WorkCallTransferStatusUpdated(uv_work_t *work, std::unique_lock<std::mutex> &lock)
+{
+    if (work == nullptr) {
+        TELEPHONY_LOGE("work is null");
+        return;
+    }
+    std::unique_ptr<CallTransferStatusContext> callTransferInfo(
+        static_cast<CallTransferStatusContext *>(work->data));
+    if (callTransferInfo == nullptr) {
+        TELEPHONY_LOGE("callTransferInfo is null");
+        return;
+    }
+    const napi_env &env = callTransferInfo->env;
+    napi_handle_scope scope = nullptr;
+    napi_status status = napi_open_handle_scope(env, &scope);
+    if (status != napi_ok || scope == nullptr) {
+        TELEPHONY_LOGE("napi open handle scope failed");
+        lock.unlock();
+        return;
+    }
+    napi_value callbackValue = GetNapiValue(callTransferInfo->env, callTransferInfo->enabled);
+    NapiReturnToJS(callTransferInfo->env, callTransferInfo->callbackRef, callbackValue, lock);
     napi_close_handle_scope(env, scope);
 }
 } // namespace Telephony
