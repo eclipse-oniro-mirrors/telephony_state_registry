@@ -478,10 +478,9 @@ void ObserverEventHandler::WorkSignalUpdated(const EventListener &listener,
         validCount++;
     }
     signalInformations.size = static_cast<int64_t>(validCount);
-    signalInformations.head = head;
+    signalInformations.head = head;  // head will be released by the cangjie callback wrapper
     void* argv = &(signalInformations);
     listener.callbackRef(argv);
-    free(head);
 }
 
 void ObserverEventHandler::WorkNetworkStateUpdated(const EventListener &listener,
