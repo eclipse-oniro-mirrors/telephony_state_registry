@@ -31,7 +31,7 @@ ohos_unittest("tel_state_registry_test") {
   ]
 
   deps = [
-    "$SOURCE_DIR:tel_state_registry",
+    "$SOURCE_DIR/test:tel_state_registry_test_base",
     "$SOURCE_DIR/frameworks/native/observer:tel_state_registry_api",
   ]
 
@@ -80,7 +80,7 @@ ohos_unittest("tel_state_registry_branch_test") {
   ]
 
   deps = [
-    "$SOURCE_DIR:tel_state_registry",
+    "$SOURCE_DIR/test:tel_state_registry_test_base",
     "$SOURCE_DIR/frameworks/native/observer:tel_state_registry_api",
   ]
 

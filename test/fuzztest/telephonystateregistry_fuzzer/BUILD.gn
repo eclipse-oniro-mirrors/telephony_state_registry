@@ -31,7 +31,7 @@ ohos_fuzztest("TelephonyStateRegistryFuzzTest") {
   ]
 
   deps = [
-    "$SUBSYSTEM_DIR/state_registry:tel_state_registry",
+    "$SUBSYSTEM_DIR/state_registry/test:tel_state_registry_test_base",
     "$SUBSYSTEM_DIR/state_registry/frameworks/native/observer:tel_state_registry_api",
   ]
 
