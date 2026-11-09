@@ -13,7 +13,6 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
-import("../stateregistry.gni")
 
 ohos_static_library("tel_state_registry_test_base") {
   sanitize = {
