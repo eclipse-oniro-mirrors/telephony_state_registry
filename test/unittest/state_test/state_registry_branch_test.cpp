@@ -420,7 +420,8 @@ HWTEST_F(StateRegistryBranchTest, Service_UpdateSimActiveState_WithoutPermission
     record.telephonyObserver_ = std::make_unique<TelephonyObserver>().release();
     record.slotId_ = 0;
     record.mask_ = TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE;
-    int32_t invalidSlotId = 5;
+    ASSERT_GT(service->slotSize_, 0);
+    int32_t invalidSlotId = service->slotSize_;
     EXPECT_FALSE(service->CheckPermission(TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE));
     EXPECT_EQ(TELEPHONY_STATE_REGISTRY_SLODID_ERROR, service->UpdateSimActiveState(invalidSlotId, false));
     EXPECT_EQ(TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED, service->UpdateSimActiveState(0, true));
