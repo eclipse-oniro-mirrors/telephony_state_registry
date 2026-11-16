@@ -16,6 +16,8 @@
 #ifndef TELEPHONY_OBSERVER_IMPL_H
 #define TELEPHONY_OBSERVER_IMPL_H
 
+#include <string_view>
+
 #include "observer_event_handler.h"
 #include "telephony_observer.h"
 #include "telephony_observer_broker.h"
@@ -48,6 +50,9 @@ public:
         return handler->SendEvent(innerEventId);
     }
 
+    static int32_t Subscribe(std::string_view event, ObserverOptions options, int64_t funcId);
+    static int32_t Unsubscribe(std::string_view event, int64_t funcId);
+
     static int32_t OnNetworkStateChange(ObserverOptions options, int64_t funcId);
     static int32_t OffNetworkStateChange(int64_t funcId);
     static int32_t OffAllNetworkStateChange();
@@ -59,6 +64,11 @@ public:
     static int32_t OnCallStateChange(ObserverOptions options, int64_t funcId);
     static int32_t OffCallStateChange(int64_t funcId);
     static int32_t OffAllCallStateChange();
+
+    // Permission-bearing subscription used by the API 26.1 Cangjie surface.
+    static int32_t OnCCallStateChange(ObserverOptions options, int64_t funcId);
+    static int32_t OffCCallStateChange(int64_t funcId);
+    static int32_t OffAllCCallStateChange();
 
     static int32_t OnCellularDataConnectionStateChange(ObserverOptions options, int64_t funcId);
     static int32_t OffCellularDataConnectionStateChange(int64_t funcId);
@@ -80,6 +90,7 @@ public:
 class FfiTelephonyObserver : public TelephonyObserver {
 public:
     void OnCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber) override;
+    void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber) override;
     void OnSignalInfoUpdated(int32_t slotId, const std::vector<sptr<SignalInformation>> &vec) override;
     void OnNetworkStateUpdated(int32_t slotId, const sptr<NetworkState> &networkState) override;
     void OnSimStateUpdated(int32_t slotId, CardType type, SimState state, LockReason reason) override;

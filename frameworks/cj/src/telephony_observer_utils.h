@@ -16,6 +16,7 @@
 #ifndef TELEPHONY_OBSERVER_UTILS_H
 #define TELEPHONY_OBSERVER_UTILS_H
 
+#include <atomic>
 #include <cstdint>
 #include <codecvt>
 #include <locale>
@@ -140,6 +141,7 @@ namespace Telephony {
         EVENT_CFU_INDICATOR_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_CFU_INDICATOR,
         EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_VOICE_MAIL_MSG_INDICATOR,
         EVENT_ICC_ACCOUNT_CHANGE = TelephonyObserverBroker::OBSERVER_MASK_ICC_ACCOUNT,
+        EVENT_CCALL_STATE_UPDATE = TelephonyObserverBroker::OBSERVER_MASK_CCALL_STATE,
     };
 
     enum class TelephonyCallbackEventId : uint32_t {
@@ -154,6 +156,7 @@ namespace Telephony {
         EVENT_ON_CFU_INDICATOR_UPDATE = 8,
         EVENT_ON_VOICE_MAIL_MSG_INDICATOR_UPDATE = 9,
         EVENT_ON_ICC_ACCOUNT_UPDATE = 10,
+        EVENT_ON_CCALL_STATE_UPDATE = 11,
     };
 
     struct EventListener {
@@ -161,7 +164,11 @@ namespace Telephony {
         int32_t slotId = 0;
         int64_t funcId;
         std::function<void(void*)> callbackRef;
-        std::shared_ptr<bool> isDeleting = nullptr;
+        std::shared_ptr<std::atomic_bool> isDeleting = nullptr;
+        // Requests the current SIM state when registering.
+        bool notifyCurrentSimState = false;
+        // Notifies subscribers even when the signal list is empty.
+        bool notifyEmptySignalInfo = false;
     };
 
     struct ObserverOptions {

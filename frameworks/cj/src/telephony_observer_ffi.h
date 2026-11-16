@@ -31,6 +31,9 @@ extern "C" {
     FFI_EXPORT int32_t FfiTelephonyObserverOnCallStateChange(ObserverOptions options, int64_t funcId);
     FFI_EXPORT int32_t FfiTelephonyObserverOffCallStateChange(int64_t funcId);
     FFI_EXPORT int32_t FfiTelephonyObserverOffAllCallStateChange();
+    FFI_EXPORT int32_t FfiTelephonyObserverOnCCallStateChange(ObserverOptions options, int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverOffCCallStateChange(int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverOffAllCCallStateChange();
     FFI_EXPORT int32_t FfiTelephonyObserverOnCellularDataConnectionStateChange(
         ObserverOptions options,
         int64_t funcId);
@@ -43,8 +46,16 @@ extern "C" {
     FFI_EXPORT int32_t FfiTelephonyObserverOffSimStateChange(int64_t funcId);
     FFI_EXPORT int32_t FfiTelephonyObserverOffAllSimStateChange();
     FFI_EXPORT int32_t FfiTelephonyObserverOnIccAccountInfoChange(int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverSubscribeIccAccountInfoChange(ObserverOptions options, int64_t funcId);
     FFI_EXPORT int32_t FfiTelephonyObserverOffIccAccountInfoChange(int64_t funcId);
     FFI_EXPORT int32_t FfiTelephonyObserverOffAllIccAccountInfoChange();
+    FFI_EXPORT int32_t FfiTelephonyObserverSubscribeNetworkStateChange(ObserverOptions options, int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverUnsubscribeNetworkStateChange(int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverSubscribeSignalInfoChange(ObserverOptions options, int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverUnsubscribeSignalInfoChange(int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverSubscribeSimStateChange(ObserverOptions options, int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverUnsubscribeSimStateChange(int64_t funcId);
+    FFI_EXPORT int32_t FfiTelephonyObserverUnsubscribeIccAccountInfoChange(int64_t funcId);
 }
 }
 }
