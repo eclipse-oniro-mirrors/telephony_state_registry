@@ -19,7 +19,6 @@ ohos_shared_library("observer") {
     debug = false
   }
   branch_protector_ret = "pac_ret"
-  version_script = "libobserver.versionscript"
   include_dirs = [
     "include",
     "$SUBSYSTEM_DIR/state_registry/frameworks/native/observer/include",

@@ -61,7 +61,11 @@ ohos_static_library("tel_state_registry_test_base") {
     "TELEPHONY_LOG_TAG = \"StateRegistry\"",
     "LOG_DOMAIN = 0xD001F07",
   ]
-  defines += state_registry_defines
+
+  if (telephony_state_registry_hicollie_able) {
+    external_deps += [ "hicollie:libhicollie" ]
+    defines += [ "HICOLLIE_ENABLE" ]
+  }
 
   if (telephony_state_registry_hicollie_able) {
     external_deps += [ "hicollie:libhicollie" ]
