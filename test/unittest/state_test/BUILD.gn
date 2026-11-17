@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import("//build/test.gni")
+import("../../../stateregistry.gni")
 SOURCE_DIR = "../../.."
 
 ohos_unittest("tel_state_registry_test") {
@@ -105,6 +106,8 @@ ohos_unittest("tel_state_registry_branch_test") {
     "TELEPHONY_LOG_TAG = \"StateRegistryTest\"",
     "LOG_DOMAIN = 0xD000F00",
   ]
+  
+  defines += state_registry_defines
 }
 
 group("unittest") {

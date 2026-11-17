@@ -13,6 +13,7 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
+import("../../stateregistry.gni")
 
 group("fuzztest") {
   testonly = true

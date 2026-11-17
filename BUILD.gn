@@ -13,21 +13,7 @@
 
 import("//build/ohos.gni")
 
-declare_args() {
-  telephony_state_registry_hicollie_able = true
-  if (defined(global_parts_info) &&
-      !defined(global_parts_info.hiviewdfx_hicollie)) {
-    telephony_state_registry_hicollie_able = false
-  }
-}
-
-telephony_extra_defines = []
-
-if (defined(global_parts_info) &&
-    defined(global_parts_info.telephony_telephony_enhanced)) {
-  telephony_extra_defines += [ "OHOS_BUILD_ENABLE_TELEPHONY_EXT" ]
-  telephony_extra_defines += [ "OHOS_BUILD_ENABLE_TELEPHONY_VSIM" ]
-}
+import("stateregistry.gni")
 
 ohos_shared_library("tel_state_registry") {
   sanitize = {
@@ -83,8 +69,7 @@ ohos_shared_library("tel_state_registry") {
 
   if (telephony_state_registry_hicollie_able) {
     external_deps += [ "hicollie:libhicollie" ]
-    defines += [ "HICOLLIE_ENABLE" ]
   }
 
-  defines += telephony_extra_defines
+  defines += state_registry_defines
 }
