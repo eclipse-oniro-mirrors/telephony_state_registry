@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import("//build/ohos.gni")
+import("../../../stateregistry.gni")
 SUBSYSTEM_DIR = "../../../.."
 ohos_shared_library("observer") {
   sanitize = {
@@ -46,10 +47,12 @@ ohos_shared_library("observer") {
     "napi:ace_napi",
   ]
 
-  defines = [
+    defines = [
     "TELEPHONY_LOG_TAG = \"StateRegistryJsApi\"",
     "LOG_DOMAIN = 0xD001F07",
   ]
+
+  defines += state_registry_defines
 
   relative_install_dir = "module/telephony"
   part_name = "state_registry"

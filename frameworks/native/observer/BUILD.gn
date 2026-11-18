@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import("//build/ohos.gni")
+import("../../../stateregistry.gni")
 SUBSYSTEM_DIR = "../../.."
 
 config("state_registry_observer_config") {
@@ -50,10 +51,12 @@ ohos_shared_library("tel_state_registry_api") {
     "samgr:samgr_proxy",
   ]
 
-  defines = [
+    defines = [
     "TELEPHONY_LOG_TAG = \"StateRegistryApi\"",
     "LOG_DOMAIN = 0xD001F07",
   ]
+
+  defines += state_registry_defines
 
   cflags_cc = [
     "-O2",
