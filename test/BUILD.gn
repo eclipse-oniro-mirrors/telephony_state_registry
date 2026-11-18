@@ -17,8 +17,8 @@ import("../stateregistry.gni")
 
 ohos_static_library("tel_state_registry_test_base") {
   sanitize = {
-    cfi = false
-    cfi_cross_dso = false
+    cfi = true
+    cfi_cross_dso = true
     debug = false
   }
   branch_protector_ret = "pac_ret"
