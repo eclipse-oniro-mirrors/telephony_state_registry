@@ -149,51 +149,54 @@ ObserverEventHandler::~ObserverEventHandler()
 
 void ObserverEventHandler::ProcessEvent(const AppExecFwk::InnerEvent::Pointer &event)
 {
+    using Handler = void (ObserverEventHandler::*)(const AppExecFwk::InnerEvent::Pointer &event);
+    struct EventHandlerEntry {
+        TelephonyCallbackEventId eventId;
+        Handler handler;
+    };
+    static constexpr EventHandlerEntry handlers[] = {
+        {TelephonyCallbackEventId::EVENT_ON_CALL_STATE_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<CallStateUpdateInfo,
+                TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_CCALL_STATE_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<CallStateUpdateInfo,
+                TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_SIM_STATE_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<SimStateUpdateInfo,
+                TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_CELLULAR_DATA_CONNECTION_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<CellularDataConnectState,
+                TelephonyUpdateEventType::EVENT_DATA_CONNECTION_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_CELLULAR_DATA_FLOW_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<CellularDataFlowUpdate,
+                TelephonyUpdateEventType::EVENT_CELLULAR_DATA_FLOW_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_CFU_INDICATOR_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<CfuIndicatorUpdate,
+                TelephonyUpdateEventType::EVENT_CFU_INDICATOR_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_VOICE_MAIL_MSG_INDICATOR_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<VoiceMailMsgIndicatorUpdate,
+                TelephonyUpdateEventType::EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_ICC_ACCOUNT_UPDATE,
+            &ObserverEventHandler::HandleCallbackVoidUpdate<TelephonyUpdateEventType::EVENT_ICC_ACCOUNT_CHANGE>},
+        {TelephonyCallbackEventId::EVENT_ON_SIGNAL_INFO_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<SignalUpdateInfo,
+                TelephonyUpdateEventType::EVENT_SIGNAL_STRENGTHS_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_NETWORK_STATE_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<NetworkStateUpdateInfo,
+                TelephonyUpdateEventType::EVENT_NETWORK_STATE_UPDATE>},
+        {TelephonyCallbackEventId::EVENT_ON_CELL_INFOMATION_UPDATE,
+            &ObserverEventHandler::HandleCallbackInfoUpdate<CellInfomationUpdate,
+                TelephonyUpdateEventType::EVENT_CELL_INFO_UPDATE>},
+    };
+
     auto eventId = static_cast<TelephonyCallbackEventId>(event->GetInnerEventId());
-    switch (eventId) {
-        case TelephonyCallbackEventId::EVENT_ON_CALL_STATE_UPDATE:
-            HandleCallbackInfoUpdate<CallStateUpdateInfo,
-                TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE>(event);
-                break;
-        case TelephonyCallbackEventId::EVENT_ON_SIM_STATE_UPDATE:
-            HandleCallbackInfoUpdate<SimStateUpdateInfo,
-                TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_CELLULAR_DATA_CONNECTION_UPDATE:
-            HandleCallbackInfoUpdate<CellularDataConnectState,
-                TelephonyUpdateEventType::EVENT_DATA_CONNECTION_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_CELLULAR_DATA_FLOW_UPDATE:
-            HandleCallbackInfoUpdate<CellularDataFlowUpdate,
-                TelephonyUpdateEventType::EVENT_CELLULAR_DATA_FLOW_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_CFU_INDICATOR_UPDATE:
-            HandleCallbackInfoUpdate<CfuIndicatorUpdate,
-                TelephonyUpdateEventType::EVENT_CFU_INDICATOR_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_VOICE_MAIL_MSG_INDICATOR_UPDATE:
-            HandleCallbackInfoUpdate<VoiceMailMsgIndicatorUpdate,
-                TelephonyUpdateEventType::EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_ICC_ACCOUNT_UPDATE:
-            HandleCallbackVoidUpdate<TelephonyUpdateEventType::EVENT_ICC_ACCOUNT_CHANGE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_SIGNAL_INFO_UPDATE:
-            HandleCallbackInfoUpdate<SignalUpdateInfo,
-                TelephonyUpdateEventType::EVENT_SIGNAL_STRENGTHS_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_NETWORK_STATE_UPDATE:
-            HandleCallbackInfoUpdate<NetworkStateUpdateInfo,
-                TelephonyUpdateEventType::EVENT_NETWORK_STATE_UPDATE>(event);
-            break;
-        case TelephonyCallbackEventId::EVENT_ON_CELL_INFOMATION_UPDATE:
-            HandleCallbackInfoUpdate<CellInfomationUpdate,
-                TelephonyUpdateEventType::EVENT_CELL_INFO_UPDATE>(event);
-            break;
-        default:
-            TELEPHONY_LOGE("ObserverEventHandler::ProcessEvent Unkonw Telephony CallbackEventId");
+    for (const auto &entry : handlers) {
+        if (entry.eventId == eventId) {
+            (this->*entry.handler)(event);
             return;
+        }
     }
+    TELEPHONY_LOGE("ObserverEventHandler::ProcessEvent Unkonw Telephony CallbackEventId");
 }
 
 int32_t ObserverEventHandler::CheckEventListenerRegister(EventListener &eventListener)
@@ -234,7 +237,10 @@ int32_t ObserverEventHandler::RegisterEventListener(EventListener &eventListener
         }
         int32_t addResult = TelephonyStateManager::AddStateObserver(
             observer, eventListener.slotId, static_cast<uint32_t>(eventListener.eventType),
-            eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE);
+            eventListener.eventType == TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE ||
+            eventListener.eventType == TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE ||
+            (eventListener.notifyCurrentSimState &&
+                eventListener.eventType == TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE));
         if (addResult != TELEPHONY_SUCCESS) {
             TELEPHONY_LOGE("AddStateObserver failed, ret=%{public}d!", addResult);
             return addResult;
@@ -246,13 +252,13 @@ int32_t ObserverEventHandler::RegisterEventListener(EventListener &eventListener
     return TELEPHONY_SUCCESS;
 }
 
-void ObserverEventHandler::SetEventListenerDeleting(std::shared_ptr<bool> isDeleting)
+void ObserverEventHandler::SetEventListenerDeleting(std::shared_ptr<std::atomic_bool> isDeleting)
 {
     if (isDeleting == nullptr) {
         TELEPHONY_LOGE("isDeleting is nullptr");
         return;
     }
-    *isDeleting = true;
+    isDeleting->store(true);
 }
 
 void ObserverEventHandler::RemoveEventListenerRegister(const TelephonyUpdateEventType eventType, int64_t funcId,
@@ -373,13 +379,14 @@ void ObserverEventHandler::WorkUpdated(const EventListener &listener,
     void *data)
 {
     TELEPHONY_LOGD("ObserverEventHandler::WorkUpdated eventType is %{public}d", listener.eventType);
-    if (listener.isDeleting == nullptr || *(listener.isDeleting)) {
+    if (listener.isDeleting == nullptr || listener.isDeleting->load()) {
         TELEPHONY_LOGI("listener is deleting");
         return;
     }
 
     switch (listener.eventType) {
         case TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE:
+        case TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE:
             WorkCallStateUpdated(listener, data);
             break;
         case TelephonyUpdateEventType::EVENT_SIGNAL_STRENGTHS_UPDATE:
@@ -450,7 +457,12 @@ void ObserverEventHandler::WorkSignalUpdated(const EventListener &listener,
     SignalUpdateInfo *infoListUpdateInfo = static_cast<SignalUpdateInfo *>(data);
     size_t infoSize = infoListUpdateInfo->signalInfoList_.size();
     if (infoSize <= 0) {
-        TELEPHONY_LOGE("signalInfoList_ size error");
+        if (listener.notifyEmptySignalInfo) {
+            CArraySignalInformation empty = { .head = nullptr, .size = 0 };
+            listener.callbackRef(&empty);
+        } else {
+            TELEPHONY_LOGE("signalInfoList_ size error");
+        }
         return;
     }
     CSignalInformation* head =

@@ -28,9 +28,16 @@
 namespace OHOS {
 namespace Telephony {
 namespace {
+// Same special slot accepted by the N-API frontend; keep frontends independent.
+constexpr int32_t SIM_SLOT_ID_FOR_DEFAULT_CONN_EVENT = 999;
+constexpr int32_t CJ_ERROR_CCALL_ARGUMENT_ERROR = 8800001;
+constexpr int32_t CJ_ERROR_CCALL_SERVICE_ERROR = 8800002;
+constexpr int32_t CJ_ERROR_CCALL_SYSTEM_ERROR = 8800003;
+constexpr int32_t CJ_ERROR_CCALL_UNKNOWN_ERROR = 8800999;
 const std::map<std::string_view, TelephonyUpdateEventType> eventMap {
     { "networkStateChange", TelephonyUpdateEventType::EVENT_NETWORK_STATE_UPDATE },
     { "callStateChange", TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE },
+    { "cCallStateChange", TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE },
     { "signalInfoChange", TelephonyUpdateEventType::EVENT_SIGNAL_STRENGTHS_UPDATE },
     { "simStateChange", TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE },
     { "cellInfoChange", TelephonyUpdateEventType::EVENT_CELL_INFO_UPDATE },
@@ -116,6 +123,26 @@ static bool IsValidSlotIdEx(TelephonyUpdateEventType eventType, int32_t slotId)
     return ((slotId >= defaultSlotId) && (slotId < SIM_SLOT_COUNT + 1));
 }
 
+static int32_t ConvertObserverErrorCode(int32_t errCode)
+{
+    switch (errCode) {
+        case TELEPHONY_ERR_ILLEGAL_USE_OF_SYSTEM_API:
+            return CJ_ERROR_ILLEGAL_USE_OF_SYSTEM_API;
+        case TELEPHONY_STATE_REGISTRY_SLODID_ERROR:
+            return CJ_ERROR_TELEPHONY_ARGUMENT_ERROR;
+        case TELEPHONY_STATE_REGISTRY_DATA_NOT_EXIST:
+        case TELEPHONY_STATE_UNREGISTRY_DATA_NOT_EXIST:
+        case TELEPHONY_STATE_REGISTRY_DATA_EXIST:
+        case TELEPHONY_STATE_REGISTRY_NOT_IMPLEMENTED:
+            return CJ_ERROR_TELEPHONY_SYSTEM_ERROR;
+        default:
+            // Reuse only legacy mappings that already recognize this native code.
+            int32_t converted = ConvertCJErrCode(errCode);
+            return errCode == TELEPHONY_SUCCESS || converted != errCode ?
+                converted : CJ_ERROR_TELEPHONY_UNKNOW_ERROR;
+    }
+}
+
 static int32_t RegisterEventListener(EventListener &eventListener)
 {
     auto handler = DelayedSingleton<ObserverEventHandler>::GetInstance();
@@ -153,32 +180,53 @@ static void NativeOn(EventListener listener, int32_t &errCode)
     errCode = RegisterEventListener(listener);
 }
 
-static int32_t On(std::string_view event, ObserverOptions options, int64_t funcId)
+static void RegisterStateObserver(EventListener listener, int32_t &errCode)
 {
-    int32_t errCode = TELEPHONY_SUCCESS;
-    std::shared_ptr<bool> isDeleting = std::make_shared<bool>(false);
+    errCode = TELEPHONY_SUCCESS;
+    if (SIM_SLOT_COUNT == 0 && listener.eventType != TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE) {
+        return;
+    }
+    if (!IsValidSlotIdEx(listener.eventType == TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE ?
+        TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE : listener.eventType, listener.slotId) &&
+        listener.slotId != SIM_SLOT_ID_FOR_DEFAULT_CONN_EVENT) {
+        errCode = ERROR_SLOT_ID_INVALID;
+        return;
+    }
+    errCode = RegisterEventListener(listener);
+}
+
+static int32_t InitEventListener(
+    std::string_view event, ObserverOptions options, int64_t funcId, EventListener &listener)
+{
+    auto isDeleting = std::make_shared<std::atomic_bool>(false);
     auto func = reinterpret_cast<void(*)(void*)>(funcId);
     auto callbackRef = CJLambda::Create(func);
     if (callbackRef == nullptr) {
-        errCode = TELEPHONY_ERR_ARGUMENT_NULL;
         TELEPHONY_LOGE("TelephonyObserverImpl on register callback is nullptr.");
-        return errCode;
+        return TELEPHONY_ERR_ARGUMENT_NULL;
     }
 
-    EventListener listener {
+    listener = {
         GetEventType(event),
         options.slotId,
         funcId,
         callbackRef,
         isDeleting
     };
-    if (listener.eventType != TelephonyUpdateEventType::NONE_EVENT_TYPE) {
-        NativeOn(listener, errCode);
-    } else {
+    if (listener.eventType == TelephonyUpdateEventType::NONE_EVENT_TYPE) {
         TELEPHONY_LOGE("TelephonyObserverImpl on register eventType is unkonw.");
-        errCode = TELEPHONY_ERR_ARGUMENT_INVALID;
+        return TELEPHONY_ERR_ARGUMENT_INVALID;
     }
+    return TELEPHONY_SUCCESS;
+}
 
+static int32_t On(std::string_view event, ObserverOptions options, int64_t funcId)
+{
+    EventListener listener;
+    int32_t errCode = InitEventListener(event, options, funcId, listener);
+    if (errCode == TELEPHONY_SUCCESS) {
+        NativeOn(listener, errCode);
+    }
     if (errCode == TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED) {
         errCode = TELEPHONY_ERR_PERMISSION_ERR;
     }
@@ -261,6 +309,74 @@ int32_t TelephonyObserverImpl::OffAllCallStateChange()
     std::string_view event("callStateChange");
     int32_t errCode = Off(event);
     return ConvertCJErrCode(errCode);
+}
+
+// Match the N-API cCallStateChange error family without changing the legacy callStateChange ABI.
+static int32_t ConvertCCallErrCode(int32_t code)
+{
+    switch (code) {
+        case TELEPHONY_SUCCESS:
+            return TELEPHONY_SUCCESS;
+        case TELEPHONY_ERR_PERMISSION_ERR:
+        case TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED:
+            return CJ_ERROR_TELEPHONY_PERMISSION_DENIED;
+        case ERROR_SLOT_ID_INVALID:
+            return CJ_ERROR_CCALL_ARGUMENT_ERROR;
+        case TELEPHONY_ERR_IPC_CONNECT_STUB_FAIL:
+            return CJ_ERROR_CCALL_SERVICE_ERROR;
+        case TELEPHONY_ERR_LOCAL_PTR_NULL:
+        case TELEPHONY_ERR_FAIL:
+        case TELEPHONY_STATE_REGISTRY_DATA_NOT_EXIST:
+            return CJ_ERROR_CCALL_SYSTEM_ERROR;
+        case TELEPHONY_ERR_ILLEGAL_USE_OF_SYSTEM_API:
+            return CJ_ERROR_ILLEGAL_USE_OF_SYSTEM_API;
+        default:
+            return CJ_ERROR_CCALL_UNKNOWN_ERROR;
+    }
+}
+
+int32_t TelephonyObserverImpl::Subscribe(std::string_view event, ObserverOptions options, int64_t funcId)
+{
+    if (funcId <= 0) {
+        return event == "cCallStateChange" ? CJ_ERROR_CCALL_ARGUMENT_ERROR : CJ_ERROR_TELEPHONY_ARGUMENT_ERROR;
+    }
+    EventListener listener;
+    int32_t code = InitEventListener(event, options, funcId, listener);
+    if (code == TELEPHONY_SUCCESS) {
+        listener.notifyCurrentSimState = listener.eventType == TelephonyUpdateEventType::EVENT_SIM_STATE_UPDATE;
+        listener.notifyEmptySignalInfo = listener.eventType == TelephonyUpdateEventType::EVENT_SIGNAL_STRENGTHS_UPDATE;
+        RegisterStateObserver(listener, code);
+    }
+    if (code == TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED) {
+        code = TELEPHONY_ERR_PERMISSION_ERR;
+    }
+    return event == "cCallStateChange" ? ConvertCCallErrCode(code) : ConvertObserverErrorCode(code);
+}
+
+int32_t TelephonyObserverImpl::Unsubscribe(std::string_view event, int64_t funcId)
+{
+    auto handler = DelayedSingleton<ObserverEventHandler>::GetInstance();
+    int32_t code = handler == nullptr ? TELEPHONY_ERR_LOCAL_PTR_NULL :
+        handler->UnregisterEventListener(GetEventType(event), funcId);
+    if (code == TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED) {
+        code = TELEPHONY_ERR_PERMISSION_ERR;
+    }
+    return event == "cCallStateChange" ? ConvertCCallErrCode(code) : ConvertObserverErrorCode(code);
+}
+
+int32_t TelephonyObserverImpl::OnCCallStateChange(ObserverOptions options, int64_t funcId)
+{
+    return Subscribe("cCallStateChange", options, funcId);
+}
+
+int32_t TelephonyObserverImpl::OffCCallStateChange(int64_t funcId)
+{
+    return Unsubscribe("cCallStateChange", funcId);
+}
+
+int32_t TelephonyObserverImpl::OffAllCCallStateChange()
+{
+    return Unsubscribe("cCallStateChange", -1);
 }
 
 int32_t TelephonyObserverImpl::OnCellularDataConnectionStateChange(ObserverOptions options, int64_t funcId)
@@ -348,6 +464,14 @@ int32_t TelephonyObserverImpl::OffAllIccAccountInfoChange()
 }
 
 // FfiTelephonyObserver
+void FfiTelephonyObserver::OnCCallStateUpdated(
+    int32_t slotId, int32_t callState, const std::u16string &phoneNumber)
+{
+    auto info = std::make_unique<CallStateUpdateInfo>(slotId, callState, phoneNumber);
+    TelephonyObserverImpl::SendEvent(
+        static_cast<uint32_t>(TelephonyCallbackEventId::EVENT_ON_CCALL_STATE_UPDATE), info);
+}
+
 void FfiTelephonyObserver::OnCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &phoneNumber)
 {
     TELEPHONY_LOGI("OnCallStateUpdated slotId = %{public}d, callState = %{public}d", slotId, callState);

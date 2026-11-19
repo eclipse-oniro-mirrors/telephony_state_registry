@@ -52,7 +52,7 @@ private:
     std::list<EventListener> listenerList_;
 
     bool CheckEventTypeExist(int32_t slotId, TelephonyUpdateEventType eventType);
-    void SetEventListenerDeleting(std::shared_ptr<bool> isDeleting);
+    void SetEventListenerDeleting(std::shared_ptr<std::atomic_bool> isDeleting);
     void RemoveEventListenerRegister(const TelephonyUpdateEventType eventType, int64_t funcId,
         std::set<int32_t> &soltIdSet);
     void CheckRemoveStateObserver(TelephonyUpdateEventType eventType, int32_t slotId, int32_t &result);
