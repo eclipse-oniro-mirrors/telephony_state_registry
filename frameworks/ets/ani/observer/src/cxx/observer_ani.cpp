@@ -32,6 +32,29 @@ constexpr const char *OBSERVER_JS_PERMISSION_ERROR_STRING =
     "Permission denied. An attempt was made to Observer "
     "On forbidden by permission : ohos.permission.GET_NETWORK_INFO or ohos.permission.LOCATION ";
 
+static int32_t WrapCallStateEx(int32_t callState)
+{
+    switch (callState) {
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_ACTIVE):
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_HOLDING):
+            return 4;
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_DIALING):
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_ALERTING):
+            return 2;
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_WAITING):
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_INCOMING):
+            return 1;
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_DISCONNECTING):
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_DISCONNECTED):
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_IDLE):
+            return 0;
+        case static_cast<int32_t>(CallStatus::CALL_STATUS_ANSWERED):
+            return 3;
+        default:
+            return -1;
+    }
+}
+
 void AniTelephonyObserver::OnSignalInfoUpdated(
     int32_t slotId, const std::vector<sptr<Telephony::SignalInformation>> &signalInfoList)
 {
@@ -84,19 +107,20 @@ void AniTelephonyObserver::OnCallStateUpdated(int32_t slotId, int32_t callState,
     on_call_state_updated(slotId, info);
 }
 
-void AniTelephonyObserver::OnCallStateUpdatedEx(int32_t slotId, int32_t callStateEx)
+void AniTelephonyObserver::OnCallStateUpdatedEx(int32_t slotId, int32_t callState)
 {
-    on_call_state_ex_updated(slotId, callStateEx);
+    int32_t telCallState = WrapCallStateEx(callState);
+    on_call_state_updated_ex(slotId, telCallState);
 }
- 
+
 void AniTelephonyObserver::OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &teleNumber)
 {
     std::string phone_number = NapiUtil::ToUtf8(teleNumber);
-    CallStateAni info{
-        .state = callState,
-        .teleNumber = rust::String(phone_number),
-    };
-    on_ccall_state_updated(slotId, info);
+    int32_t cCallState = callState;
+    if (cCallState == static_cast<int32_t>(CallStatus::CALL_STATUS_UNKNOWN)) {
+        cCallState = static_cast<int32_t>(CallStatus::CALL_STATUS_IDLE);
+    }
+    on_c_call_state_updated(slotId, cCallState, rust::String(phone_number));
 }
 
 void AniTelephonyObserver::OnSimStateUpdated(
@@ -151,6 +175,23 @@ void AniTelephonyObserver::OnSimActiveStateUpdated(int32_t slotId, bool enable)
     on_sim_active_state_updated(slotId, enable);
 }
 
+void AniTelephonyObserver::OnCommunicationStateUpdated(int32_t slotId, bool isAdvanced)
+{
+    on_communication_state_updated(slotId, isAdvanced);
+}
+
+void AniTelephonyObserver::OnVoIPStateUpdated(const Telephony::VoIPCallStateInfo &info)
+{
+    VoIPCallStateInfoAni infoAni {
+        .app_name = rust::String(info.appName),
+        .contact_name = rust::String(info.contactName),
+        .call_type = static_cast<int32_t>(info.callType),
+        .call_state = static_cast<int32_t>(info.callState),
+        .is_voice_answer_supported = info.isVoiceAnswerSupported,
+    };
+    on_voip_state_updated(infoAni);
+}
+
 static inline ArktsError ConvertArktsError(int32_t errorCode)
 {
     JsError error = NapiUtil::ConverErrorMessageForJs(errorCode);
@@ -162,24 +203,28 @@ static inline ArktsError ConvertArktsError(int32_t errorCode)
     return ArktsErr;
 }
 
-static inline ArktsError ConvertArktsErrorEx(int32_t errorCode, uint32_t eventType)
+static bool IsCallStateExEventType(uint32_t eventType)
 {
-    if (eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE) ||
-        eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE)) {
-        JsError error = NapiUtil::ConverErrorMessageCallStateExForJs(errorCode);
-        ArktsError arktsErr = {
-            .errorCode = error.errorCode,
-            .errorMessage = rust::string(error.errorMessage),
-        };
-        return arktsErr;
-    }
-    return ConvertArktsError(errorCode);
+    return eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE) ||
+           eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE);
+}
+
+static inline ArktsError ConvertArktsErrorCallStateEx(int32_t errorCode)
+{
+    JsError error = NapiUtil::ConverErrorMessageCallStateExForJs(errorCode);
+
+    ArktsError ArktsErr = {
+        .errorCode = error.errorCode,
+        .errorMessage = rust::string(error.errorMessage),
+    };
+    return ArktsErr;
 }
 
 bool IsValidSlotIdEx(int32_t slotId, uint32_t eventType)
 {
     int32_t defaultSlotId = DEFAULT_SIM_SLOT_ID;
     if (eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE) ||
+        eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_VOIP_CALL_STATE_UPDATE) ||
         eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE) ||
         eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE)) {
         defaultSlotId = -1;
@@ -191,19 +236,22 @@ bool IsValidSlotIdEx(int32_t slotId, uint32_t eventType)
 ArktsError EventListenerRegister(int32_t slotId, uint32_t eventType)
 {
     int32_t errorCode;
+    bool isCallStateEx = IsCallStateExEventType(eventType);
 
     AniTelephonyObserver *telephonyObserver = std::make_unique<AniTelephonyObserver>().release();
     sptr<Telephony::TelephonyObserverBroker> observer(telephonyObserver);
     if (observer == nullptr) {
         TELEPHONY_LOGE("error by observer nullptr");
         errorCode = Telephony::TELEPHONY_ERR_LOCAL_PTR_NULL;
-        return ConvertArktsErrorEx(errorCode, eventType);
+        if (isCallStateEx) {
+            return ConvertArktsErrorCallStateEx(errorCode);
+        }
+        return ConvertArktsError(errorCode);
     }
-    bool isUpdate = (eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE) ||
-        eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE) ||
-        eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE));
+    bool notifyNow = eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE) ||
+                     eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE);
     errorCode = Telephony::TelephonyStateManager::AddStateObserver(
-        observer, slotId, eventType, isUpdate);
+        observer, slotId, eventType, notifyNow);
     if (errorCode == TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED) {
         ArktsError ArktsErr = {
             .errorCode = JS_ERROR_TELEPHONY_PERMISSION_DENIED,
@@ -212,7 +260,10 @@ ArktsError EventListenerRegister(int32_t slotId, uint32_t eventType)
         return ArktsErr;
     }
     
-    return ConvertArktsErrorEx(errorCode, eventType);
+    if (isCallStateEx) {
+        return ConvertArktsErrorCallStateEx(errorCode);
+    }
+    return ConvertArktsError(errorCode);
 }
 
 ArktsError EventListenerUnRegister(int32_t slotId, uint32_t eventType)
@@ -224,6 +275,9 @@ ArktsError EventListenerUnRegister(int32_t slotId, uint32_t eventType)
             .errorMessage = rust::string(OBSERVER_JS_PERMISSION_ERROR_STRING),
         };
         return ArktsErr;
+    }
+    if (IsCallStateExEventType(eventType)) {
+        return ConvertArktsErrorCallStateEx(errorCode);
     }
     return ConvertArktsError(errorCode);
 }

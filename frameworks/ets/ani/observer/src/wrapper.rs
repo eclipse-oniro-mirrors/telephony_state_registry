@@ -55,12 +55,15 @@ impl From<ffi::CallStateAni> for bridge::CallStateInfo {
     }
 }
 
-impl From<ffi::CallStateAni> for bridge::CCallStateInfo {
-    fn from(value: ffi::CallStateAni) -> Self {
-        Self {
-            state: value.state,
-            teleNumber: value.teleNumber,
-        }
+impl From<ffi::VoIPCallStateInfoAni> for bridge::VoIPCallStateInfo {
+    fn from(value: ffi::VoIPCallStateInfoAni) -> Self {
+        Self::new(
+            value.app_name,
+            value.contact_name,
+            value.call_type,
+            value.call_state,
+            value.is_voice_answer_supported,
+        )
     }
 }
 
@@ -98,6 +101,14 @@ pub(crate) mod ffi {
         teleNumber: String,
     }
 
+    struct VoIPCallStateInfoAni {
+        app_name: String,
+        contact_name: String,
+        call_type: i32,
+        call_state: i32,
+        is_voice_answer_supported: bool,
+    }
+
     extern "Rust" {
         fn on_cellular_data_flow_updated(slot_id: i32, data_flow_type: i32);
         fn on_icc_account_updated();
@@ -107,9 +118,11 @@ pub(crate) mod ffi {
         fn on_cellular_data_connect_state_updated(slot_id: i32, data_state: i32, network_type: i32);
         fn on_network_state_updated(slot_id: i32, network_state: NetworkStateAni);
         fn on_call_state_updated(slot_id: i32, call_state: CallStateAni);
-        fn on_call_state_ex_updated(slot_id: i32, call_state_ex: i32);
-        fn on_ccall_state_updated(slot_id: i32, call_state: CallStateAni);
+        fn on_call_state_updated_ex(slot_id: i32, call_state: i32);
+        fn on_c_call_state_updated(slot_id: i32, call_state: i32, tele_number: String);
         fn on_sim_active_state_updated(slot_id: i32, is_active: bool);
+        fn on_communication_state_updated(slot_id: i32, is_advanced: bool);
+        fn on_voip_state_updated(voip_call_state: VoIPCallStateInfoAni);
     }
 
     unsafe extern "C++" {

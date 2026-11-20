@@ -36,7 +36,9 @@ export default namespace observer {
   type CardType = sim.CardType;
   type SimState = sim.SimState;
   type CallState = call.CallState;
+
   type TelCallState = call.TelCallState;
+  type CCallState = call.CCallState;
 
   export native function onCellularDataFlowChangeInner(callback: Callback<DataFlowType>): void;
   export native function onCellularDataFlowChangeOptionsInner(options: ObserverOptions, callback: Callback<DataFlowType>): void;
@@ -60,19 +62,28 @@ export default namespace observer {
   export native function onNetworkStateChangeOptions(options: ObserverOptions, callback: Callback<NetworkState>): void;
   export native function offNetworkStateChange(callback?: Callback<NetworkState>): void;
 
-  export native function onCallStateChange(callback: Callback<CallStateInfo>): void;
-  export native function onCallStateChangeOptions(options: ObserverOptions, callback: Callback<CallStateInfo>): void;
-  export native function offCallStateChange(callback?: Callback<CallStateInfo>): void;
+  export native function onCallStateChangeInner(callback: Callback<CallStateInfo>): void;
+  export native function onCallStateChangeOptionsInner(options: ObserverOptions, callback: Callback<CallStateInfo>): void;
+  export native function offCallStateChangeInner(callback?: Callback<CallStateInfo>): void;
+
+  export native function onCallStateChangeExInner(callback: Callback<TelCallState>): void;
+  export native function onCallStateChangeExOptionsInner(callback: Callback<TelCallState>, options: ObserverOptions): void;
+  export native function offCallStateChangeExInner(callback?: Callback<TelCallState>): void;
+
+  export native function onCCallStateChangeInner(callback: Callback<CCallStateInfo>): void;
+  export native function onCCallStateChangeOptionsInner(callback: Callback<CCallStateInfo>, options: ObserverOptions): void;
+  export native function offCCallStateChangeInner(callback?: Callback<CCallStateInfo>): void;
 
   export native function onGetSimActiveState(slotId: int, callback: Callback<boolean>): void;
   export native function offGetSimActiveState(callback?: Callback<boolean>): void;
 
-  export native function onCallStateChangeEx(callback: Callback<TelCallState>): void;
-  export native function offCallStateChangeEx(callback?: Callback<TelCallState>): void;
- 
-  export native function onCCallStateChange(callback: Callback<CCallStateInfo>): void;
-  export native function offCCallStateChange(callback?: Callback<CCallStateInfo>): void;
-  
+  export native function onCommunicationStateChange(callback: Callback<boolean>): void;
+  export native function onCommunicationStateChangeOptions(options: ObserverOptions, callback: Callback<boolean>): void;
+  export native function offCommunicationStateChange(callback?: Callback<boolean>): void;
+
+  export native function onVoIPStateChange(callback: Callback<VoIPCallStateInfo>): void;
+  export native function offVoIPStateChange(callback?: Callback<VoIPCallStateInfo>): void;
+
   export function onCellularDataFlowChange(callback: Callback<DataFlowType>): void {
     onCellularDataFlowChangeInner(callback)
   }
@@ -105,6 +116,54 @@ export default namespace observer {
     }
   }
 
+  export function onCallStateChange(callback: Callback<CallStateInfo>): void {
+    onCallStateChangeInner(callback)
+  }
+
+  export function onCallStateChange(options: ObserverOptions, callback: Callback<CallStateInfo>): void {
+    onCallStateChangeOptionsInner(options, callback)
+  }
+
+  export function offCallStateChange(callback?: Callback<CallStateInfo>): void {
+    if (callback == undefined) {
+      offCallStateChangeInner()
+    } else {
+      offCallStateChangeInner(callback as Callback<CallStateInfo>)
+    }
+  }
+
+  export function onCallStateChangeEx(callback: Callback<TelCallState>, options?: ObserverOptions): void {
+    if (options == undefined) {
+      onCallStateChangeExInner(callback)
+    } else {
+      onCallStateChangeExOptionsInner(callback, options)
+    }
+  }
+
+  export function offCallStateChangeEx(callback?: Callback<TelCallState>): void {
+    if (callback == undefined) {
+      offCallStateChangeExInner()
+    } else {
+      offCallStateChangeExInner(callback as Callback<TelCallState>)
+    }
+  }
+
+  export function onCCallStateChange(callback: Callback<CCallStateInfo>, options?: ObserverOptions): void {
+    if (options == undefined) {
+      onCCallStateChangeInner(callback)
+    } else {
+      onCCallStateChangeOptionsInner(callback, options)
+    }
+  }
+
+  export function offCCallStateChange(callback?: Callback<CCallStateInfo>): void {
+    if (callback == undefined) {
+      offCCallStateChangeInner()
+    } else {
+      offCCallStateChangeInner(callback as Callback<CCallStateInfo>)
+    }
+  }
+
   export function on(type: string, callback: Callback<Any>): void {
     if (type == 'iccAccountInfoChange') {
       onIccAccountInfoChange(callback as Callback<void>)
@@ -118,6 +177,12 @@ export default namespace observer {
       onNetworkStateChange(callback as Callback<NetworkState>)
     } else if (type == 'callStateChange') {
       onCallStateChange(callback as Callback<CallStateInfo>)
+    } else if (type == 'callStateChangeEx') {
+      onCallStateChangeEx(callback as Callback<TelCallState>)
+    } else if (type == 'communicationStateChange') {
+      onCommunicationStateChange(callback as Callback<boolean>)
+    } else if (type == 'voipStateChange') {
+      onVoIPStateChange(callback as Callback<VoIPCallStateInfo>)
     }
   }
 
@@ -131,9 +196,15 @@ export default namespace observer {
     } else if (type == 'networkStateChange') {
       onNetworkStateChangeOptions(options, callback as Callback<NetworkState>)
     } else if (type == 'callStateChange') {
-      onCallStateChangeOptions(options, callback as Callback<CallStateInfo>)
-    } else if (type == 'callStateChangeEx') {
-      onCallStateChangeEx(callback as Callback<TelCallState>)
+      onCallStateChangeOptionsInner(options, callback as Callback<CallStateInfo>)
+    } else if (type == 'communicationStateChange') {
+      onCommunicationStateChangeOptions(options, callback as Callback<boolean>)
+    }
+  }
+
+  export function on(type: string, callback: Callback<Any>, options: ObserverOptions): void {
+    if (type == 'callStateChangeEx') {
+      onCallStateChangeEx(callback as Callback<TelCallState>, options)
     }
   }
 
@@ -179,6 +250,18 @@ export default namespace observer {
         offCallStateChangeEx()
       } else {
         offCallStateChangeEx(callback as Callback<TelCallState>)
+      }
+    } else if (type == 'communicationStateChange') {
+      if (callback == undefined) {
+        offCommunicationStateChange()
+      } else {
+        offCommunicationStateChange(callback as Callback<boolean>)
+      }
+    } else if (type == 'voipStateChange') {
+      if (callback == undefined) {
+        offVoIPStateChange()
+      } else {
+        offVoIPStateChange(callback as Callback<VoIPCallStateInfo>)
       }
     }
   }
@@ -239,13 +322,46 @@ export default namespace observer {
     teleNumber: string;
   }
 
+  export interface VoIPCallStateInfo {
+    appName: string;
+    contactName: string;
+    callType: VoIPCallType;
+    callState: VoIPCallState;
+    isVoiceAnswerSupported: boolean;
+  }
+
+  export class VoIPCallStateInfoInner implements VoIPCallStateInfo {
+    appName: string;
+    contactName: string;
+    callType: VoIPCallType;
+    callState: VoIPCallState;
+    isVoiceAnswerSupported: boolean;
+  }
+
+  export enum VoIPCallType {
+    VOICE = 0,
+    VIDEO = 1,
+  }
+
+  export enum VoIPCallState {
+    IDLE = 0,
+    INCOMING = 1,
+    OUTGOING = 2,
+    DIALING = 3,
+    ANSWERED = 4,
+    ACTIVE = 5,
+    HOLDING = 6,
+    DISCONNECTING = 7,
+    DISCONNECTED = 8,
+  }
+
   export interface CCallStateInfo {
-    state: int;
+    state: CCallState;
     teleNumber: string;
   }
- 
+
   export class CCallStateInfoInner implements CCallStateInfo {
-    state: int;
+    state: CCallState;
     teleNumber: string;
   }
 

@@ -32,8 +32,6 @@ enum class TelephonyUpdateEventType {
     NONE_EVENT_TYPE = 0,
     EVENT_NETWORK_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_NETWORK_STATE,
     EVENT_CALL_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE,
-    EVENT_CALL_STATE_EX_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE_EX,
-    EVENT_CCALL_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CCALL_STATE,
     EVENT_CELL_INFO_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CELL_INFO,
     EVENT_SIGNAL_STRENGTHS_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_SIGNAL_STRENGTHS,
     EVENT_SIM_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_SIM_STATE,
@@ -43,6 +41,10 @@ enum class TelephonyUpdateEventType {
     EVENT_VOICE_MAIL_MSG_INDICATOR_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_VOICE_MAIL_MSG_INDICATOR,
     EVENT_ICC_ACCOUNT_CHANGE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_ICC_ACCOUNT,
     EVENT_SIM_ACTIVE_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_SIM_ACTIVE_STATE,
+    EVENT_COMMUNICATION_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_COMMUNICATION_STATE,
+    EVENT_VOIP_CALL_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_VOIP_CALL_STATE,
+    EVENT_CALL_STATE_EX_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CALL_STATE_EX,
+    EVENT_CCALL_STATE_UPDATE = Telephony::TelephonyObserverBroker::OBSERVER_MASK_CCALL_STATE,
 };
 
 class AniTelephonyObserver : public Telephony::TelephonyObserver {
@@ -56,9 +58,11 @@ public:
     void OnCellularDataFlowUpdated(int32_t slotId, int32_t dataFlowType) override;
     void OnIccAccountUpdated() override;
     void OnCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &teleNumber) override;
-    void OnCallStateUpdatedEx(int32_t slotId, int32_t callStateEx) override;
+    void OnCallStateUpdatedEx(int32_t slotId, int32_t callState) override;
     void OnCCallStateUpdated(int32_t slotId, int32_t callState, const std::u16string &teleNumber) override;
     void OnSimActiveStateUpdated(int32_t slotId, bool enable) override;
+    void OnCommunicationStateUpdated(int32_t slotId, bool isAdvanced) override;
+    void OnVoIPStateUpdated(const Telephony::VoIPCallStateInfo &info) override;
 };
 
 bool IsValidSlotIdEx(int32_t slotId, uint32_t eventType);
