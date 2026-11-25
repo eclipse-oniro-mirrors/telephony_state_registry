@@ -32,26 +32,37 @@ constexpr const char *OBSERVER_JS_PERMISSION_ERROR_STRING =
     "Permission denied. An attempt was made to Observer "
     "On forbidden by permission : ohos.permission.GET_NETWORK_INFO or ohos.permission.LOCATION ";
 
+// TelCallState values as defined in the static SDK (call.TelCallState), used by
+// onCallStateChangeEx to report the call state to ArkTS.
+enum class TelCallStateValue : int32_t {
+    TEL_CALL_STATE_UNKNOWN = -1,
+    TEL_CALL_STATE_IDLE = 0,
+    TEL_CALL_STATE_RINGING = 1,
+    TEL_CALL_STATE_OFFHOOK = 2,
+    TEL_CALL_STATE_ANSWERED = 3,
+    TEL_CALL_STATE_CONNECTED = 4,
+};
+
 static int32_t WrapCallStateEx(int32_t callState)
 {
     switch (callState) {
         case static_cast<int32_t>(CallStatus::CALL_STATUS_ACTIVE):
         case static_cast<int32_t>(CallStatus::CALL_STATUS_HOLDING):
-            return 4;
+            return static_cast<int32_t>(TelCallStateValue::TEL_CALL_STATE_CONNECTED);
         case static_cast<int32_t>(CallStatus::CALL_STATUS_DIALING):
         case static_cast<int32_t>(CallStatus::CALL_STATUS_ALERTING):
-            return 2;
+            return static_cast<int32_t>(TelCallStateValue::TEL_CALL_STATE_OFFHOOK);
         case static_cast<int32_t>(CallStatus::CALL_STATUS_WAITING):
         case static_cast<int32_t>(CallStatus::CALL_STATUS_INCOMING):
-            return 1;
+            return static_cast<int32_t>(TelCallStateValue::TEL_CALL_STATE_RINGING);
         case static_cast<int32_t>(CallStatus::CALL_STATUS_DISCONNECTING):
         case static_cast<int32_t>(CallStatus::CALL_STATUS_DISCONNECTED):
         case static_cast<int32_t>(CallStatus::CALL_STATUS_IDLE):
-            return 0;
+            return static_cast<int32_t>(TelCallStateValue::TEL_CALL_STATE_IDLE);
         case static_cast<int32_t>(CallStatus::CALL_STATUS_ANSWERED):
-            return 3;
+            return static_cast<int32_t>(TelCallStateValue::TEL_CALL_STATE_ANSWERED);
         default:
-            return -1;
+            return static_cast<int32_t>(TelCallStateValue::TEL_CALL_STATE_UNKNOWN);
     }
 }
 
@@ -249,7 +260,8 @@ ArktsError EventListenerRegister(int32_t slotId, uint32_t eventType)
         return ConvertArktsError(errorCode);
     }
     bool notifyNow = eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_UPDATE) ||
-                     eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE);
+                     eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CALL_STATE_EX_UPDATE) ||
+                     eventType == static_cast<uint32_t>(TelephonyUpdateEventType::EVENT_CCALL_STATE_UPDATE);
     errorCode = Telephony::TelephonyStateManager::AddStateObserver(
         observer, slotId, eventType, notifyNow);
     if (errorCode == TELEPHONY_STATE_REGISTRY_PERMISSION_DENIED) {
