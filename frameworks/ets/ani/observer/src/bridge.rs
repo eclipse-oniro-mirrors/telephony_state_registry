@@ -1,4 +1,4 @@
-// Copyright (C) 2025 Huawei Device Co., Ltd.
+﻿// Copyright (C) 2025 Huawei Device Co., Ltd.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -14,6 +14,7 @@
 use serde::{Deserialize, Serialize};
 
 pub const DEFAULT_SIM_SLOT_ID: i32 = 0;
+pub const DEFAULT_VOIP_SLOT_ID: i32 = -1;
 
 #[ani_rs::ani(path = "@ohos.telephony.data.data.DataFlowType")]
 #[derive(Debug, Clone)]
@@ -408,7 +409,24 @@ impl CallStateInfo {
         }
     }
 }
- 
+
+#[ani_rs::ani(path = "@ohos.telephony.observer.observer.VoIPCallType")]
+#[repr(i32)]
+#[derive(Debug, Clone)]
+pub enum VoIPCallType {
+    Voice = 0,
+    Video = 1,
+}
+
+impl From<i32> for VoIPCallType {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => VoIPCallType::Video,
+            _ => VoIPCallType::Voice,
+        }
+    }
+}
+
 #[ani_rs::ani(path = "@ohos.telephony.call.call.TelCallState")]
 #[repr(i32)]
 #[derive(Debug, Clone)]
@@ -420,10 +438,11 @@ pub enum TelCallState {
     TelCallStateAnswered = 3,
     TelCallStateConnected = 4,
 }
- 
+
 impl From<i32> for TelCallState {
     fn from(value: i32) -> Self {
         match value {
+            -1 => TelCallState::TelCallStateUnknown,
             0 => TelCallState::TelCallStateIdle,
             1 => TelCallState::TelCallStateRinging,
             2 => TelCallState::TelCallStateOffhook,
@@ -433,19 +452,114 @@ impl From<i32> for TelCallState {
         }
     }
 }
- 
+
+#[ani_rs::ani(path = "@ohos.telephony.observer.observer.VoIPCallState")]
+#[repr(i32)]
+#[derive(Debug, Clone)]
+pub enum VoIPCallState {
+    Idle = 0,
+    Incoming = 1,
+    Outgoing = 2,
+    Dialing = 3,
+    Answered = 4,
+    Active = 5,
+    Holding = 6,
+    Disconnecting = 7,
+    Disconnected = 8,
+}
+
+impl From<i32> for VoIPCallState {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => VoIPCallState::Incoming,
+            2 => VoIPCallState::Outgoing,
+            3 => VoIPCallState::Dialing,
+            4 => VoIPCallState::Answered,
+            5 => VoIPCallState::Active,
+            6 => VoIPCallState::Holding,
+            7 => VoIPCallState::Disconnecting,
+            8 => VoIPCallState::Disconnected,
+            _ => VoIPCallState::Idle,
+        }
+    }
+}
+
+#[ani_rs::ani(path = "@ohos.telephony.call.call.CCallState")]
+#[repr(i32)]
+#[derive(Debug, Clone)]
+pub enum CCallState {
+    CcallStateUnknown = -1,
+    CcallStateActive = 0,
+    CcallStateHolding = 1,
+    CcallStateDialing = 2,
+    CcallStateAlerting = 3,
+    CcallStateIncoming = 4,
+    CcallStateWaiting = 5,
+    CcallStateDisconnected = 6,
+    CcallStateDisconnecting = 7,
+    CcallStateIdle = 8,
+    CcallStateAnswered = 9,
+}
+
+impl From<i32> for CCallState {
+    fn from(value: i32) -> Self {
+        match value {
+            -1 => CCallState::CcallStateUnknown,
+            0 => CCallState::CcallStateActive,
+            1 => CCallState::CcallStateHolding,
+            2 => CCallState::CcallStateDialing,
+            3 => CCallState::CcallStateAlerting,
+            4 => CCallState::CcallStateIncoming,
+            5 => CCallState::CcallStateWaiting,
+            6 => CCallState::CcallStateDisconnected,
+            7 => CCallState::CcallStateDisconnecting,
+            8 => CCallState::CcallStateIdle,
+            9 => CCallState::CcallStateAnswered,
+            _ => CCallState::CcallStateUnknown,
+        }
+    }
+}
+
+#[ani_rs::ani(path = "@ohos.telephony.observer.observer.VoIPCallStateInfoInner")]
+#[derive(Debug, Clone)]
+pub struct VoIPCallStateInfo {
+    pub app_name: String,
+    pub contact_name: String,
+    pub call_type: VoIPCallType,
+    pub call_state: VoIPCallState,
+    pub is_voice_answer_supported: bool,
+}
+
+impl VoIPCallStateInfo {
+    pub fn new(
+        app_name: String,
+        contact_name: String,
+        call_type: i32,
+        call_state: i32,
+        is_voice_answer_supported: bool,
+    ) -> Self {
+        Self {
+            app_name,
+            contact_name,
+            call_type: VoIPCallType::from(call_type),
+            call_state: VoIPCallState::from(call_state),
+            is_voice_answer_supported,
+        }
+    }
+}
+
 #[ani_rs::ani(path = "@ohos.telephony.observer.observer.CCallStateInfoInner")]
 #[derive(Debug, Clone)]
 pub struct CCallStateInfo {
-    pub state: i32,
+    pub state: CCallState,
     pub teleNumber: String,
 }
- 
+
 impl CCallStateInfo {
-    pub fn new(state: i32, tele_number: String) -> Self {
+    pub fn new(state: i32, teleNumber: String) -> Self {
         Self {
-            state,
-            teleNumber: tele_number,
+            state: CCallState::from(state),
+            teleNumber,
         }
     }
 }

@@ -11,11 +11,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+mod bridge;
+mod log;
 mod observer;
 mod register;
-mod bridge;
 mod wrapper;
-mod log;
 
 ani_rs::ani_constructor! {
     namespace "@ohos.telephony.observer.observer"
@@ -40,15 +40,22 @@ ani_rs::ani_constructor! {
         "onNetworkStateChange": observer::on_network_state_change,
         "onNetworkStateChangeOptions": observer::on_network_state_change_option,
         "offNetworkStateChange": observer::off_network_state_change,
-        "onCallStateChange": observer::on_call_state_change,
-        "onCallStateChangeOptions": observer::on_call_state_change_option,
-        "offCallStateChange": observer::off_call_state_change,
-        "onCallStateChangeEx": observer::on_call_state_change_ex,
-        "offCallStateChangeEx": observer::off_call_state_change_ex,
-        "onCCallStateChange": observer::on_ccall_state_change,
-        "offCCallStateChange": observer::off_ccall_state_change,
+        "onCallStateChangeInner": observer::on_call_state_change,
+        "onCallStateChangeOptionsInner": observer::on_call_state_change_option,
+        "offCallStateChangeInner": observer::off_call_state_change,
+        "onCallStateChangeExInner": observer::on_call_state_change_ex,
+        "onCallStateChangeExOptionsInner": observer::on_call_state_change_ex_option,
+        "offCallStateChangeExInner": observer::off_call_state_change_ex,
+        "onCCallStateChangeInner": observer::on_c_call_state_change,
+        "onCCallStateChangeOptionsInner": observer::on_c_call_state_change_option,
+        "offCCallStateChangeInner": observer::off_c_call_state_change,
         "onGetSimActiveState": observer::on_get_sim_active_state,
         "offGetSimActiveState": observer::off_get_sim_active_state,
+        "onCommunicationStateChange": observer::on_communication_state_change,
+        "onCommunicationStateChangeOptions": observer::on_communication_state_change_option,
+        "offCommunicationStateChange": observer::off_communication_state_change,
+        "onVoIPStateChange": observer::on_voip_state_change,
+        "offVoIPStateChange": observer::off_voip_state_change,
     ]
 }
 
